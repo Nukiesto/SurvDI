@@ -1,0 +1,16 @@
+{
+    "name": "SurvDI.Application",
+    "rootNamespace": "",
+    "references": [
+        "GUID:bc19c109aacb51f42a2bcc8c84fe7442"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

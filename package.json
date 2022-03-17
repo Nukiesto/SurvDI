@@ -1,0 +1,19 @@
+{
+  "name": "com.nukiesto.survdi",
+  "version": "1.0.0",
+  "displayName": "SurvDI",
+  "description": "Simple to use DI Container",
+  "dependencies": {
+    "com.nukiesto.usefulscripts" : "1.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nukiesto/SurvDI.git",
+    "directory": "SurvDI"
+  },
+  "author": {
+    "name": "Nukiesto",
+    "email": "nukiesto@gmail.com",
+    "url": "https://github.com/Nukiesto"
+  }
+}

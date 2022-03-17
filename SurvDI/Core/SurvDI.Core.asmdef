@@ -1,0 +1,17 @@
+{
+    "name": "SurvDI.Core",
+    "references": [
+        "GUID:09e363de8e95b054dbe0ab179ad99365"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Sirenix.OdinInspector.Attributes.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
