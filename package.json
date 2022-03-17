@@ -9,7 +9,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/Nukiesto/SurvDI.git",
-    "directory": "SurvDI"
+    "directory": "SurvDI",
+    "revision": "fa66d75579b0c0c982a5deb7589cea35b2a61595"
   },
   "author": {
     "name": "Nukiesto",
