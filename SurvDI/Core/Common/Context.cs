@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Plugins.SurvDI.Core.Container;
+using SurvDI.Core.Container;
 
-namespace Plugins.SurvDI.Core.Common
+namespace SurvDI.Core.Common
 {
     public class Context
     {

@@ -2,13 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using Plugins.SurvDI.Core.Services.SavingIntegration;
-
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
 
-namespace Plugins.SurvDI.Core.Container
+namespace SurvDI.Core.Container
 {
     [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
     [Serializable]

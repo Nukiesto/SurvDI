@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using UsefulScripts.NetScripts.Data;
 
-namespace Plugins.SurvDI.Core.Services.SavingIntegration
+namespace SurvDI.Core.Services.SavingIntegration
 {
     [Serializable]
     public class SavingData

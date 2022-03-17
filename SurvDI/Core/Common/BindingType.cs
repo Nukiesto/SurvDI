@@ -1,5 +1,5 @@
 ﻿
-namespace Plugins.SurvDI.Core.Common
+namespace SurvDI.Core.Common
 {
     public enum BindingType
     {

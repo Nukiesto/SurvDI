@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Plugins.SurvDI.Core.Common;
-using Plugins.SurvDI.Core.Container;
+using SurvDI.Core.Common;
+using SurvDI.Core.Container;
 
-namespace Plugins.SurvDI.Core.Services
+namespace SurvDI.Core.Services
 {
     public interface ISignal { }
 

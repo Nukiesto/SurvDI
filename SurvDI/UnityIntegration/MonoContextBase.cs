@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Plugins.SurvDI.Application.Interfaces;
-using Plugins.SurvDI.Core.Common;
-using Plugins.SurvDI.Core.Container;
+using SurvDI.Core.Common;
+using SurvDI.Core.Container;
 using UnityEngine;
 
-namespace Plugins.SurvDI.UnityIntegration
+namespace SurvDI.UnityIntegration.UnityIntegration
 {
     public abstract class MonoContextBase : MonoBehaviour, IContext
     {

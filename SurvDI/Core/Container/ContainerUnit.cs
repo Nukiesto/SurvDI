@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Plugins.SurvDI.Core.Common;
-using Plugins.SurvDI.Core.Services.SavingIntegration;
-using UnityEngine;
+using SurvDI.Core.Common;
+using SurvDI.Core.Services.SavingIntegration;
 
-namespace Plugins.SurvDI.Core.Container
+namespace SurvDI.Core.Container
 {
     public class ContainerUnit
     {

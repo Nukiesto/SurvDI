@@ -1,7 +1,7 @@
-﻿using Plugins.SurvDI.Core.Container;
+﻿using SurvDI.Core.Container;
 using UnityEngine;
 
-namespace Plugins.SurvDI.UnityIntegration
+namespace SurvDI.UnityIntegration.UnityIntegration
 {
     public abstract class Installer : MonoBehaviour
     {

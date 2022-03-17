@@ -1,8 +1,8 @@
 ﻿using System;
 using JetBrains.Annotations;
-using Plugins.SurvDI.Core.Container;
+using SurvDI.Core.Container;
 
-namespace Plugins.SurvDI.Application.Interfaces
+namespace SurvDI.Application.Application.Interfaces
 {
     [AttributeUsage(AttributeTargets.Class)]
     [MeansImplicitUse(ImplicitUseKindFlags.Assign)]

@@ -1,10 +1,10 @@
-﻿using Plugins.SurvDI.Application.Interfaces;
-using Plugins.SurvDI.Core.Common;
-using Plugins.SurvDI.Core.Container;
-using Plugins.SurvDI.Core.Services.SavingIntegration;
+﻿using SurvDI.Application.Application.Interfaces;
+using SurvDI.Core.Common;
+using SurvDI.Core.Container;
+using SurvDI.Core.Services.SavingIntegration;
 using UnityEngine;
 
-namespace Plugins.SurvDI.UnityIntegration
+namespace SurvDI.UnityIntegration.UnityIntegration
 {
     public class ProjectContext : MonoContextBase
     {

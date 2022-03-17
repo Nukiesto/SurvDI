@@ -1,5 +1,6 @@
 {
     "name": "SurvDI.Core",
+    "rootNamespace": "SurvDI.Core",
     "references": [
         "GUID:09e363de8e95b054dbe0ab179ad99365"
     ],

@@ -1,6 +1,6 @@
 {
     "name": "SurvDI.UnityIntegration",
-    "rootNamespace": "",
+    "rootNamespace": "SurvDI.UnityIntegration",
     "references": [
         "GUID:bc19c109aacb51f42a2bcc8c84fe7442",
         "GUID:8689f63007944184c9e063cc63cb24cb"

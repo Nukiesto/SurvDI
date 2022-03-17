@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Plugins.SurvDI.Core.Common;
-using UnityEngine;
+using SurvDI.Core.Common;
 
-namespace Plugins.SurvDI.Core.Container
+namespace SurvDI.Core.Container
 {
     [Flags]
     public enum InjectMode

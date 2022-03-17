@@ -1,7 +1,7 @@
 ﻿using System;
 using JetBrains.Annotations;
 
-namespace Plugins.SurvDI.Core.Common
+namespace SurvDI.Core.Common
 {
     [AttributeUsage(AttributeTargets.Field)]
     [MeansImplicitUse(ImplicitUseKindFlags.Assign)]
