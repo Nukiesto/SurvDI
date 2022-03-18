@@ -31,3 +31,4 @@ public class TestService : ITickable, IFixTickable, ILateTickable
     }
 ```
 Запустив данный код, мы получим
+![s](.\images\tick.png)

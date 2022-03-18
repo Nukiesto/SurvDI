@@ -1,32 +1,11 @@
-﻿using SurvDI.Application.Application.Interfaces;
-using SurvDI.Core.Common;
-using UnityEngine;
+﻿using System;
 
 namespace SurvDI.Examples.Test1
 {
-    public class TestService : ITickable, IFixTickable, ILateTickable
+    public class TestService : IDisposable
     {
-        [Inject] private OtherService _otherService;
-        
-        public TestService()
+        public void Dispose()
         {
-            Debug.Log("Success");
-            _otherService.Do();
-        }
-        
-        public void Tick()
-        {
-            
-        }
-
-        public void FixTick()
-        {
-            
-        }
-
-        public void LateTick()
-        {
-            
         }
     }
 }
