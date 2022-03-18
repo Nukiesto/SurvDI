@@ -1,3 +1,3 @@
 # Contact 
 
-To contact us, please create a GitHub issue!
+Nukiesto: https://github.com/Nukiesto
