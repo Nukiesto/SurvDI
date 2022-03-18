@@ -25,15 +25,15 @@ public class TestInstaller : Installer
 не стоит волноваться что OtherService будет Null, так как инъекция происходит раньше всех конструкторов
 ```c#
 public class TestService
+{
+    [Inject] private OtherService _otherService;
+    
+    public TestService()
     {
-        [Inject] private OtherService _otherService;
-        
-        public TestService()
-        {
-            Debug.Log("Success");
-            _otherService.Do();
-        }
+        Debug.Log("Success");
+        _otherService.Do();
     }
+}
 ```
 В консоли Unity мы получаем вполне ожидаемый результат
 ![s](.\images\doService.png)
