@@ -1,12 +1,16 @@
-﻿using UnityEngine;
+﻿using SurvDI.Core.Services;
+using UnityEngine;
 
 namespace SurvDI.Examples.Test1
 {
     public class OtherService
     {
-        public void Do()
+        public OtherService(SignalBus signalBus)
         {
-            Debug.Log("Do");
+            signalBus.Subscribe<TestEvent>(s =>
+            {
+                Debug.Log(s.Data);
+            });
         }
     }
 }

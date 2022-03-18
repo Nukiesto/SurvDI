@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using SurvDI.Core.Common;
 using SurvDI.Core.Container;
 
@@ -64,6 +65,8 @@ namespace SurvDI.Core.Services
 
         public SignalBus()
         {
+            if (_signalsInject == null)
+                return;
             var signals = _signalsInject.Where(signal => !_signals.ContainsKey(signal.SignalType));
             foreach (var signal in signals)
                 _signals.Add(signal.SignalType, signal);
@@ -92,10 +95,21 @@ namespace SurvDI.Core.Services
 
     public static class SignalBusExt
     {
+        public static ContainerUnit DeclareSignal<T>(this DiContainer container)
+        {
+            return container.DeclareSignal(typeof(T));
+        }  
         public static ContainerUnit DeclareSignal(this DiContainer container, Type typeSignal)
         {
-            var signal = new Signal(typeSignal);
-            return container.BindInstanceMulti(signal);
+            return container.BindInstanceMulti(new Signal(typeSignal));
+        }
+        public static void FindAndAddSignals(this DiContainer container)
+        {
+            var signalType = typeof(ISignal);
+            var signalsInit = Assembly.GetExecutingAssembly().GetTypes()
+                .Where(type => type.GetInterfaces().Contains(signalType));
+            foreach (var signal in signalsInit)
+                container.DeclareSignal(signal);
         }
     }
 }

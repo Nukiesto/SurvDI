@@ -22,3 +22,5 @@ public class MonoBeh : MonoBehaviour
 ```
 
 Для MonoBehaviour`s, так же работают IInit, IPost, IPreInit и другие интерфейсы
+
+    В работе с MonoBehaviour, которые в контейнере, рекомендую использовать ITick(и другие), вместо Update()
