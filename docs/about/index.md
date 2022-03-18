@@ -1,3 +1,3 @@
-# About This Site
+# About This Framework
 
-This site content was generated using Docify and went to demo in Opensource.com
+Создан [**Nukiesto(GitHub)**](https://github.com/Nukiesto)

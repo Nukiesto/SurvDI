@@ -1,7 +1,7 @@
 ﻿
 using SurvDI.Core.Services;
 
-namespace Tests
+namespace SurvDI.Examples.Test1
 {
     public readonly struct TestSignal : ISignal
     {
