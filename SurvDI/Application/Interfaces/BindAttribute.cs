@@ -2,7 +2,7 @@
 using JetBrains.Annotations;
 using SurvDI.Core.Container;
 
-namespace SurvDI.Application.Application.Interfaces
+namespace SurvDI.Application.Interfaces
 {
     [AttributeUsage(AttributeTargets.Class)]
     [MeansImplicitUse(ImplicitUseKindFlags.Assign)]

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Reflection;
-using SurvDI.Application.Application.Interfaces;
+using SurvDI.Application.Interfaces;
 using SurvDI.Core.Container;
 using UnityEngine;
 using UnityEngine.SceneManagement;

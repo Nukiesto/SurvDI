@@ -1,4 +1,4 @@
-﻿using SurvDI.Application.Application.Interfaces;
+﻿using SurvDI.Application.Interfaces;
 using UnityEngine;
 
 namespace SurvDI.Examples.Test1

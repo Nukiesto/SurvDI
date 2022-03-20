@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using SurvDI.Application.Application.Interfaces;
+using SurvDI.Application.Interfaces;
 using SurvDI.Core.Container;
 using UnityEngine;
 

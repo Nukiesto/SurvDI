@@ -1,4 +1,4 @@
-﻿using SurvDI.Application.Application.Interfaces;
+﻿using SurvDI.Application.Interfaces;
 using SurvDI.Core.Common;
 using SurvDI.Core.Services;
 

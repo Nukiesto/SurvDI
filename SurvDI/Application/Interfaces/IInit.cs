@@ -1,4 +1,4 @@
-﻿namespace SurvDI.Application.Application.Interfaces
+﻿namespace SurvDI.Application.Interfaces
 {
     /// <summary>
     /// Идет после всех конструкторов

@@ -1,5 +1,5 @@
 ﻿
-namespace SurvDI.Application.Application.Interfaces
+namespace SurvDI.Application.Interfaces
 {
     public interface ITickable
     {
