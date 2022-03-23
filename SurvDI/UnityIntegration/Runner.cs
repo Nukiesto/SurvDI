@@ -3,7 +3,7 @@ using SurvDI.Application.Interfaces;
 using SurvDI.Core.Container;
 using UnityEngine;
 
-namespace SurvDI.UnityIntegration.UnityIntegration
+namespace SurvDI.UnityIntegration
 {
     public class Runner : MonoBehaviour
     {

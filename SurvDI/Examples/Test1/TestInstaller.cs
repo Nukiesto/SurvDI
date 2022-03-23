@@ -1,6 +1,6 @@
 ﻿using SurvDI.Core.Container;
 using SurvDI.Core.Services;
-using SurvDI.UnityIntegration.UnityIntegration;
+using SurvDI.UnityIntegration;
 
 namespace SurvDI.Examples.Test1
 {

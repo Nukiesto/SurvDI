@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace SurvDI.UnityIntegration.UnityIntegration
+namespace SurvDI.UnityIntegration
 {
     public class DestroyHandlerContainerUnit : MonoBehaviour
     {

@@ -4,7 +4,7 @@ using SurvDI.Core.Container;
 using SurvDI.Core.Services.SavingIntegration;
 using UnityEngine;
 
-namespace SurvDI.UnityIntegration.UnityIntegration
+namespace SurvDI.UnityIntegration
 {
     public class ProjectContext : MonoContextBase
     {

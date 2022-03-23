@@ -5,7 +5,7 @@ using SurvDI.Core.Common;
 using SurvDI.Core.Container;
 using UnityEngine;
 
-namespace SurvDI.UnityIntegration.UnityIntegration
+namespace SurvDI.UnityIntegration
 {
     public abstract class MonoContextBase : MonoBehaviour, IContext
     {
