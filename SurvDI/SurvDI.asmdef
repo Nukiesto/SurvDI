@@ -1,16 +1,14 @@
 {
-    "name": "SurvDI.Core",
-    "rootNamespace": "SurvDI.Core",
+    "name": "SurvDI",
+    "rootNamespace": "SurvDI",
     "references": [
-        "GUID:09e363de8e95b054dbe0ab179ad99365"
+        "UsefulScripts"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "overrideReferences": true,
-    "precompiledReferences": [
-        "Sirenix.OdinInspector.Attributes.dll"
-    ],
+    "overrideReferences": false,
+    "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],

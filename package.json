@@ -1,10 +1,10 @@
 {
   "name": "com.nukiesto.survdi",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "displayName": "SurvDI",
   "description": "Simple to use DI Container",
   "dependencies": {
-    "com.nukiesto.usefulscripts" : "1.0.1"
+    "com.nukiesto.usefulscripts" : "1.0.4"
   },
   "repository": {
     "type": "git",
