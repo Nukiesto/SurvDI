@@ -38,6 +38,8 @@ namespace SurvDI.Core.Container
         public bool CanPreInit { get; set; } = true;
         public bool CanInit { get; set; } = true;
         public bool CanPostInit { get; set; } = true;
+        private bool _canLoadSave = true;
+        
         public event Action OnDisposeEvent;
 
         private bool _isInjected;
@@ -232,7 +234,11 @@ namespace SurvDI.Core.Container
 
         public void LoadSaveable()
         {
-            SavingModule.LoadAll(Type, Object);
+            if (_canLoadSave)
+            {
+                SavingModule.LoadAll(Type, Object);
+                _canLoadSave = false;
+            }
         }
         
         public T GetObject<T>()
