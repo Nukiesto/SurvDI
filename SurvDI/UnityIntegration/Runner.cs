@@ -21,36 +21,26 @@ namespace SurvDI.UnityIntegration
         {
             container.OnBindNewInstanceEvent += (c, s) =>
             {
-                switch (s.Object)
-                {
-                    case ITickable tick:
-                        _tickables.Add(tick);
-                        break;
-                    case IFixTickable fixTick:
-                        _fixTickables.Add(fixTick);
-                        break;
-                    case ILateTickable lateTick:
-                        _lateTickables.Add(lateTick);
-                        break;
-                }
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
+                if (s.Object is ITickable tick)
+                    _tickables.Add(tick);
+                if (s.Object is IFixTickable fixTick)
+                    _fixTickables.Add(fixTick);
+                if (s.Object is ILateTickable lateTick)
+                    _lateTickables.Add(lateTick);
             };
             container.OnRemoveInstanceEvent += (c, s) =>
             {
-                switch (s.Object)
-                {
-                    case ITickable tick:
-                        if (_tickables.Contains(tick))
-                            _tickables.Remove(tick);
-                        break;
-                    case IFixTickable fixTick:
-                        if (_fixTickables.Contains(fixTick))
-                            _fixTickables.Remove(fixTick);
-                        break;
-                    case ILateTickable lateTick:
-                        if (_lateTickables.Contains(lateTick))
-                            _lateTickables.Remove(lateTick);
-                        break;
-                }
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
+                if (s.Object is ITickable tick)
+                    if (_tickables.Contains(tick))
+                        _tickables.Remove(tick);
+                if (s.Object is IFixTickable fixTick)
+                    if (_fixTickables.Contains(fixTick))
+                        _fixTickables.Remove(fixTick);
+                if (s.Object is ILateTickable lateTick)
+                    if (_lateTickables.Contains(lateTick))
+                        _lateTickables.Remove(lateTick);
             };
             //Add tickables
             _tickables.AddRange(container.GetInterfaceUnits<ITickable>());
