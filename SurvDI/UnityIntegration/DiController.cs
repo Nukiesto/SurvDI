@@ -126,16 +126,17 @@ namespace SurvDI.UnityIntegration
             var monoContext = Instance._monoContext;
             if (monoContext == null)
                 Debug.LogWarning("MonoContext is null, Dispose is willn`t work");
-
-
+            
             var list = go.GetComponents<MonoBehaviour>();
             var container = Instance.Container;
 
             foreach (var monoBehaviour in list)
             {
                 var containerUnit = InitBeh(monoBehaviour, container);
+                if (containerUnit == null) continue;
+                
                 InitNewInstance(containerUnit);
-                if (monoContext !=null)
+                if (monoContext != null)
                     monoContext.AddNewInstanceThisContext(containerUnit);
             }
         }
