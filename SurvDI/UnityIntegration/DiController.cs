@@ -135,13 +135,13 @@ namespace SurvDI.UnityIntegration
                 var containerUnit = InitBeh(monoBehaviour, container);
                 if (containerUnit == null) continue;
                 
-                InitNewInstance(containerUnit);
+                InitNewInstance(containerUnit, false);
                 if (monoContext != null)
                     monoContext.AddNewInstanceThisContext(containerUnit);
             }
         }
 
-        public static void InitNewInstance(ContainerUnit containerUnit)
+        public static void InitNewInstance(ContainerUnit containerUnit, bool isInstalling)
         {
             var container = Instance.Container;
             
@@ -154,6 +154,8 @@ namespace SurvDI.UnityIntegration
                 
                 destroyHandler.OnDestroyEvent += containerUnit.Dispose;
                 
+                if (isInstalling)
+                    return;
                 containerUnit.LoadSaveable();
                 containerUnit.InvokeInjectsOnInit(container);
                 
@@ -177,6 +179,7 @@ namespace SurvDI.UnityIntegration
                 }
             }
         }
+        
         public static ContainerUnit InitBeh(object beh, DiContainer container)
         {
             var type = beh.GetType();

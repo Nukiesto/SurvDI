@@ -24,7 +24,7 @@ namespace SurvDI.UnityIntegration
 
         protected void OnBindNewToInitThisContextUnits(DiContainer container, ContainerUnit unit)
         {
-            DiController.InitNewInstance(unit);
+            DiController.InitNewInstance(unit, true);
             AddNewInstanceThisContext(unit);
         }
 
