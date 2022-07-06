@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using SurvDI.Core.Common;
@@ -217,6 +218,7 @@ namespace SurvDI.Core.Container
                 if (type == elementType)
                 {
                     var listType = typeof(List<>).MakeGenericType(elementType);
+                    
                     var list = fieldInfo.GetValue(Object);
                     if (list == null)
                     {
@@ -227,6 +229,11 @@ namespace SurvDI.Core.Container
                     var getObjectMethod = typeof(ContainerUnit).GetMethod("GetObject")?.MakeGenericMethod(elementType);
                     var objGet = getObjectMethod?.Invoke(containerUnit, new object[] { });
                     methodAdd?.Invoke(list, new[] {objGet});
+
+                    containerUnit.OnDisposeEvent += () =>
+                    {
+                        RemoveMulty(type, containerUnit);
+                    };
                     break;
                 }
             }
@@ -234,6 +241,9 @@ namespace SurvDI.Core.Container
 
         public void RemoveMulty(Type type, ContainerUnit containerUnit)
         {
+            var toRemove = containerUnit.Object;
+            if (toRemove == null)
+                return;
             foreach (var (fieldInfo, id) in _injectMassTypes)
             {
                 var fieldType = fieldInfo.FieldType;
@@ -248,10 +258,12 @@ namespace SurvDI.Core.Container
                         fieldInfo.SetValue(Object, list);
                         continue;
                     }
-                    var methodAdd = listType.GetMethod("Remove");
-                    var getObjectMethod = typeof(ContainerUnit).GetMethod("GetObject")?.MakeGenericMethod(elementType);
-                    var objGet = getObjectMethod?.Invoke(containerUnit, new object[] { });
-                    methodAdd?.Invoke(list, new[] {objGet});
+                    
+                    var methodRemove = listType.GetMethod("Remove");
+                    var methodContains = listType.GetMethod("Contains");
+                    var contains = (bool)(methodContains?.Invoke(list, new[] {toRemove})??false);
+                    if (contains)
+                        methodRemove?.Invoke(list, new[] {toRemove});
                     break;
                 }
             }
