@@ -48,12 +48,26 @@ namespace SurvDI.UnityIntegration
                 projectContextGo.AddComponent<Runner>().Init(Container);
             
             DontDestroyOnLoad(projectContextGo);
-            
+
+            Invoking();
+        }
+        private void OnDestroy()
+        {
+            Instance = null;
+            SceneManager.sceneLoaded -= OnLoadScene;
+        }
+        private void OnLoadScene(Scene newScene, LoadSceneMode loadSceneMode)
+        {
+            GetOnScene<MonoContext>().obj.Installing(Container);
+            Invoking();
+        }
+
+        private void Invoking()
+        {
             Container.LoadSavingAll();
             Container.InvokeInjectAll();
             Container.InvokeConstructorsAll();
             
-            DontDestroyOnLoad(projectContextGo);
             var toPreInits = Container.GetInterfaceUnitsContainers<IPreInit>();
             foreach (var containerUnit in toPreInits)
             {
@@ -85,16 +99,6 @@ namespace SurvDI.UnityIntegration
                 }
             }
         }
-        private void OnDestroy()
-        {
-            Instance = null;
-            SceneManager.sceneLoaded -= OnLoadScene;
-        }
-        private void OnLoadScene(Scene newScene, LoadSceneMode loadSceneMode)
-        {
-            GetOnScene<MonoContext>().obj.Installing(Container);
-        }
-
         private (GameObject go, T obj) InstallContext<T>() where T : MonoContextBase
         {
             var (go, context) = GetOnScene<T>();
