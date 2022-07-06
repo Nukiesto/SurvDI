@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Reflection;
-using SurvDI.Application.Interfaces;
 using SurvDI.Core.Container;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -11,25 +9,6 @@ namespace SurvDI.UnityIntegration
     {
         [SerializeField] private Installer[] installers;
         [SerializeField] private bool bindInstancesOnSceneInRuntime = true;
-        
-        private void Awake()
-        {
-            CheckContexts(this);
-        }
-
-        public override void OnInstalling(DiContainer container)
-        {
-            foreach (var installer in installers)
-            {
-                installer.Container = container;
-                installer.Installing();
-            }
-            
-            var list = GetAllMonobehavsOnScene();
-           
-            if (bindInstancesOnSceneInRuntime)
-                InitInstancesOnScene(container, list);
-        }
 
         private static List<object> GetAllMonobehavsOnScene()
         {
@@ -37,27 +16,15 @@ namespace SurvDI.UnityIntegration
             var rootObjs = SceneManager.GetActiveScene().GetRootGameObjects();
 
             foreach (var root in rootObjs)
+            {
+                if (root.GetComponent<ProjectContext>() != null)
+                    continue;
                 monoBehavs.AddRange(root.GetComponentsInChildren<MonoBehaviour>(true));
-
+            }
+            
             return monoBehavs;
         }
-
-        private static void InitInstancesOnScene(DiContainer container, List<object> monoBehavs)
-        {
-            foreach (var beh in monoBehavs)
-            {
-                if (beh == null)
-                    continue;
-                var type = beh.GetType();
-                var attr = (BindAttribute) type.GetCustomAttribute(typeof(BindAttribute));
-                if (attr == null)
-                    continue;
-                if (attr.Multy)
-                    container.BindInstanceMulti(type, beh, attr.InjectMode);
-                else
-                    container.BindInstanceSingle(type, beh, attr.InjectMode);
-            }
-        }
+        
         private static void InitInstallersOnScene(DiContainer container, List<object> monoBehavs)
         {
             foreach (var beh in monoBehavs)
@@ -73,6 +40,33 @@ namespace SurvDI.UnityIntegration
         private void OnDestroy()
         {
             OnDestroyInvoke();
+        }
+
+        protected override void OnPreInstalling(DiContainer container)
+        {
+            container.OnBindNewInstanceEvent += OnBindNewToInitThisContextUnits;
+        }
+
+        protected override void OnInstalling(DiContainer container)
+        {
+            if (installers != null)
+            {
+                foreach (var installer in installers)
+                {
+                    installer.Container = container;
+                    installer.Installing();
+                }
+            }
+            
+            var list = GetAllMonobehavsOnScene();
+            
+            if (bindInstancesOnSceneInRuntime)
+                DiController.InjectInstances(container, list);
+        }
+
+        protected override void OnPostInstalling(DiContainer container)
+        {
+            container.OnBindNewInstanceEvent -= OnBindNewToInitThisContextUnits;
         }
     }
 }

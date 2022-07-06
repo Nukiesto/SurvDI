@@ -1,74 +1,55 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using SurvDI.Core.Common;
+﻿using System.Collections.Generic;
+using System.Reflection;
+using SurvDI.Application.Interfaces;
 using SurvDI.Core.Container;
 using UnityEngine;
 
 namespace SurvDI.UnityIntegration
 {
-    public abstract class MonoContextBase : MonoBehaviour, IContext
+    public abstract class MonoContextBase : MonoBehaviour
     {
-#if UNITY_2019_4
         private readonly List<ContainerUnit> _thisContextUnits = new List<ContainerUnit>();
-#else
-        private readonly List<ContainerUnit> _thisContextUnits = new ();
-#endif
-        protected DiContainer Container { get; set; }
 
-        protected void CheckContexts(MonoContext monoContext)
-        {
-            var projectContextOnScene = FindObjectsOfType<ProjectContext>();
-            if (projectContextOnScene.Length > 1 && !ProjectContext.IsInstantiated)
-                throw new Exception("Project Context count dont > 0");
-
-            ProjectContext projectContext = null;
-            
-            if (projectContextOnScene.Length > 0)
-                projectContext = projectContextOnScene.First();
-            ProjectContext.Init(projectContext != null ? projectContext.gameObject : null, monoContext);
-            
-            Container = ProjectContext.Instance.Container;
-        }
+        private bool _isInstalled;
 
         protected void OnDestroyInvoke()
         {
             while (_thisContextUnits.Count > 0)
-            {
                 foreach (var thisContextUnit in _thisContextUnits)
                 {
-                    Debug.Log("DISPOSE");
                     thisContextUnit.Dispose();
                     break;
                 }
-            }
         }
 
-        protected void OnBindNewToInitThisContextUnits(DiContainer container, ContainerUnit s)
+        protected void OnBindNewToInitThisContextUnits(DiContainer container, ContainerUnit unit)
         {
-            _thisContextUnits.Add(s);
-            if (s.Object is MonoBehaviour monoBeh)
+            DiController.InitNewInstance(unit);
+            AddNewInstanceThisContext(unit);
+        }
+
+        public void AddNewInstanceThisContext(ContainerUnit unit)
+        {
+            _thisContextUnits.Add(unit);
+            unit.OnDisposeEvent += () =>
             {
-                var go = monoBeh.gameObject;
-                var destroyHandler = go.AddComponent<DestroyHandlerContainerUnit>();
-                destroyHandler.OnDestroyEvent += s.Dispose;
-            }
-            s.OnDisposeEvent += () =>
-            {
-                if (_thisContextUnits.Contains(s))
-                    _thisContextUnits.Remove(s);
+                if (_thisContextUnits.Contains(unit))
+                    _thisContextUnits.Remove(unit);
             };
         }
-        
-        public abstract void OnInstalling(DiContainer container);
-        public void OnPreInstalling(DiContainer container)
+        protected abstract void OnInstalling(DiContainer container);
+        protected abstract void OnPreInstalling(DiContainer container);
+        protected abstract void OnPostInstalling(DiContainer container);
+       
+        public void Installing(DiContainer container)
         {
-            container.OnBindNewInstanceEvent += OnBindNewToInitThisContextUnits;
-        }
-
-        public void OnPostInstalling(DiContainer container)
-        {
-            container.OnBindNewInstanceEvent -= OnBindNewToInitThisContextUnits;
+            if (!_isInstalled)
+            {
+                _isInstalled = true;
+                OnPreInstalling(container);
+                OnInstalling(container);
+                OnPostInstalling(container);
+            }
         }
     }
 }

@@ -6,13 +6,6 @@ namespace SurvDI.Core.Common
 {
     public class Context
     {
-        public static void Installing(DiContainer container, IContext context)
-        {
-            context.OnPreInstalling(container);
-            context.OnInstalling(container);
-            context.OnPostInstalling(container);
-        }
-
         public static void InitEvents(DiContainer container)
         {
             container.OnBindNewInstanceEvent += OnBindForMultyNeed;
@@ -46,18 +39,5 @@ namespace SurvDI.Core.Common
             if (s.Object is IDisposable disposable)
                 disposable.Dispose();
         }
-    }
-
-    public interface IContext
-    {
-#if UNITY_2019_4
-        void OnInstalling(DiContainer container);
-        void OnPreInstalling(DiContainer container);
-        void OnPostInstalling(DiContainer container);
-#else
-        public void OnInstalling(DiContainer container);
-        public void OnPreInstalling(DiContainer container);
-        public void OnPostInstalling(DiContainer container);
-#endif
     }
 }
