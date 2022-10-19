@@ -43,12 +43,15 @@ namespace SurvDI.UnityIntegration
             var (projectContextGo, projectContext) = InstallContext<ProjectContext>();
             var (monoContextGo, monoContext) = InstallContext<MonoContext>();
             _monoContext = monoContext;
-            
-            if (projectContextGo.GetComponent<Runner>() == null)
-                projectContextGo.AddComponent<Runner>().Init(Container);
-            
-            DontDestroyOnLoad(projectContextGo);
 
+            if (projectContextGo != null)
+            {
+                if (projectContextGo.GetComponent<Runner>() == null)
+                    projectContextGo.AddComponent<Runner>().Init(Container);
+                
+                DontDestroyOnLoad(projectContextGo);
+            }
+            
             Invoking();
         }
         private void OnDestroy()
@@ -99,6 +102,7 @@ namespace SurvDI.UnityIntegration
                 }
             }
         }
+        
         private (GameObject go, T obj) InstallContext<T>() where T : MonoContextBase
         {
             var (go, context) = GetOnScene<T>();
