@@ -28,7 +28,7 @@ namespace SurvDI.UnityIntegration
         }
         private void Init()
         {
-            Debug.Log("Init");
+            Debug.Log("Init DI Controller");
             Instance = this;
             DontDestroyOnLoad(gameObject);
             SceneManager.sceneLoaded += OnLoadScene;
@@ -61,7 +61,13 @@ namespace SurvDI.UnityIntegration
         }
         private void OnLoadScene(Scene newScene, LoadSceneMode loadSceneMode)
         {
-            GetOnScene<MonoContext>().obj.Installing(Container);
+            var monoContext = GetOnScene<MonoContext>().obj;
+            if (monoContext != null)
+                monoContext.Installing(Container);
+
+            var projectContext = GetOnScene<ProjectContext>().go;
+            Destroy(projectContext);
+            
             Invoking();
         }
 
@@ -110,6 +116,7 @@ namespace SurvDI.UnityIntegration
                 context.Installing(Container);
             return (go, context);
         }
+        
         private static (GameObject go, T obj) GetOnScene<T>() where T : class
         {
             var rootObjs = SceneManager.GetActiveScene().GetRootGameObjects();
@@ -128,12 +135,15 @@ namespace SurvDI.UnityIntegration
 
             return (null, null);
         }
-
         public static void Inject(GameObject go)
         {
             var monoContext = Instance._monoContext;
             if (monoContext == null)
-                Debug.LogWarning("MonoContext is null, Dispose is willn`t work");
+            {
+                var newMonoContext = new GameObject("MonoContext");
+                monoContext = newMonoContext.AddComponent<MonoContext>();
+                Debug.LogWarning("MonoContext is null, create new MonoContext");
+            }
             
             var list = go.GetComponents<MonoBehaviour>();
             var container = Instance.Container;
@@ -148,7 +158,6 @@ namespace SurvDI.UnityIntegration
                     monoContext.AddNewInstanceThisContext(containerUnit);
             }
         }
-
         public static void InitNewInstance(ContainerUnit containerUnit, bool isInstalling)
         {
             var container = Instance.Container;
@@ -187,7 +196,6 @@ namespace SurvDI.UnityIntegration
                 }
             }
         }
-        
         public static ContainerUnit InitBeh(object beh, DiContainer container)
         {
             var type = beh.GetType();
