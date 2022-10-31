@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
+using SurvDI.UnityIntegration.Debugging;
 using UsefulScripts.NetScripts.Data;
 
 namespace SurvDI.Core.Services.SavingIntegration
@@ -25,7 +27,7 @@ namespace SurvDI.Core.Services.SavingIntegration
             }
         }
 
-        public Dictionary<string, Unit> Units = new Dictionary<string, Unit>();
+        public Dictionary<string, Unit> Units = new();
     }
     public interface IOnSave
     {
@@ -60,7 +62,8 @@ namespace SurvDI.Core.Services.SavingIntegration
                 {
                     if (saveData.Units.TryGetValue(fieldInfo.Name, out var data))
                     {
-                        var valueGet = DataSaver.Deserialize(data.data, fieldInfo.FieldType) ?? Activator.CreateInstance(fieldInfo.FieldType);
+                        var valueGet = DataSaver.Deserialize(data.data, fieldInfo.FieldType);
+                        
                         fieldInfo.SetValue(obj, valueGet);
                     }
                     else
@@ -73,6 +76,13 @@ namespace SurvDI.Core.Services.SavingIntegration
                 DataSaver.Save(GetName(classType), saveData);
             }
         }
+
+        private static object GetEmptyInstance(Type type)
+        {
+            if (type == typeof(string))
+                return "";
+            return Activator.CreateInstance(type);
+        }
         public static void SaveAll(Type classType, object obj)
         {
             if (classType != null)
@@ -81,6 +91,7 @@ namespace SurvDI.Core.Services.SavingIntegration
                 var fieldsSaveable = fields.Where(s => s.GetCustomAttribute<SaveableAttribute>() != null).ToList();
                 if (fieldsSaveable.Count == 0)
                     return;
+                Debugger.Log("Save");
                 var saveData = DataSaver.Load<SavingData>(GetName(classType)) ?? new SavingData();
                 
                 foreach (var fieldInfo in fieldsSaveable)

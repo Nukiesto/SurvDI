@@ -4,7 +4,7 @@ using SurvDI.Core.Container;
 
 namespace SurvDI.Core.Common
 {
-    public class Context
+    public static class ContainerInitEvents
     {
         public static void InitEvents(DiContainer container)
         {

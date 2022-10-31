@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-#if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
-#endif
+using UnityEngine;
 
 namespace SurvDI.Core.Container
 {
@@ -14,39 +12,20 @@ namespace SurvDI.Core.Container
     {
         //SINGLE UNITS
         //k-type;v-unit
-#if ODIN_INSPECTOR
-        [ShowInInspector]
-#endif
-        internal readonly Dictionary<Type, ContainerUnit> ContainerSingleUnits = new Dictionary<Type, ContainerUnit>();
+        internal readonly Dictionary<Type, ContainerUnit> ContainerSingleUnits = new();
         
         //MULTUPLE UNITS
         //k-asType;v-units
-#if ODIN_INSPECTOR
-        [ShowInInspector]
-#endif
-        internal readonly Dictionary<Type, List<ContainerUnit>> ContainerAsTypeUnits = new Dictionary<Type, List<ContainerUnit>>();
+        internal readonly Dictionary<Type, List<ContainerUnit>> ContainerAsTypeUnits = new();
         //k-type;v-units
-#if ODIN_INSPECTOR
-        [ShowInInspector] 
-#endif
-        internal readonly Dictionary<Type, List<ContainerUnit>> ContainerMultiUnits = new Dictionary<Type, List<ContainerUnit>>();
+        internal readonly Dictionary<Type, List<ContainerUnit>> ContainerMultiUnits = new();
         //k-needMultyType;v-units
-#if ODIN_INSPECTOR
-        [ShowInInspector]
-#endif
-        internal readonly Dictionary<Type, List<ContainerUnit>> ContainersMultyNeed = new Dictionary<Type, List<ContainerUnit>>();
+        internal readonly Dictionary<Type, List<ContainerUnit>> ContainersMultyNeed = new();
         
         public event Action<DiContainer, ContainerUnit> OnBindNewInstanceEvent;
         public event Action<DiContainer, ContainerUnit> OnRemoveInstanceEvent;
-#if ODIN_INSPECTOR
-        [ShowInInspector]
-#endif
-#if UNITY_2019_4
-        internal readonly List<ContainerUnit> AllUnits = new List<ContainerUnit>();
-#else
-        internal readonly List<ContainerUnit> AllUnits = new();
-#endif
         
+        internal readonly List<ContainerUnit> AllUnits = new();
         public List<T> ResolveMulti<T>()
         {
             var list = new List<T>();
@@ -131,7 +110,8 @@ namespace SurvDI.Core.Container
         public void RemoveUnit(ContainerUnit containerUnit)
         {
             OnRemoveInstanceEvent?.Invoke(this, containerUnit);
-            
+            Debug.Log($"Remove: {containerUnit.Type}");
+            Debug.Log(ContainerSingleUnits.ContainsKey(containerUnit.Type));
             if (ContainerSingleUnits.ContainsKey(containerUnit.Type))
                 ContainerSingleUnits.Remove(containerUnit.Type);
             if (ContainerAsTypeUnits.ContainsKey(containerUnit.Type))

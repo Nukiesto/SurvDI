@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace SurvDI.UnityIntegration
 {
+    [DisallowMultipleComponent]
     public class ProjectContext : MonoContextBase
     {
         [SerializeField] private Installer[] installers;
@@ -24,8 +25,7 @@ namespace SurvDI.UnityIntegration
             {
                 foreach (var installer in installers)
                 {
-                    installer.Container = container;
-                    installer.Installing();
+                    installer.InstallingInternal(container);
                 }
 
                 var list = GetComponents<MonoBehaviour>().Cast<object>().ToList();

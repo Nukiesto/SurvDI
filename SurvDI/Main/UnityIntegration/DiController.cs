@@ -1,11 +1,18 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using SurvDI.Application.Interfaces;
 using SurvDI.Core.Common;
 using SurvDI.Core.Container;
 using SurvDI.Core.Services.SavingIntegration;
+using SurvDI.UnityIntegration.Debugging;
+using SurvDI.UnityIntegration.Settings;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace SurvDI.UnityIntegration
 {
@@ -14,7 +21,14 @@ namespace SurvDI.UnityIntegration
         public static DiController Instance { get; private set; }
         public DiContainer Container { get; private set; }
 
-        private MonoContext _monoContext;
+        //Contexts
+        private MonoContext _currentSceneMonoContext;
+        private bool _isHasProjectContext;
+
+        internal SurvDISettings SurvDISettings { get; private set; }
+        private const string SurvDIName = "SurvDISettings";
+        private const string SurvDISettingsPath = "Assets/Resources/" + SurvDIName + ".asset";
+        private static string ResourcesPath => UnityEngine.Application.dataPath + "/Resources";
         
         [RuntimeInitializeOnLoadMethod]
         private static void EnterPlayMode()
@@ -26,51 +40,105 @@ namespace SurvDI.UnityIntegration
         {
             Init();
         }
+        private void OnDestroy()
+        {
+            Instance = null;
+            SceneManager.sceneLoaded -= OnLoadScene;
+        }
         private void Init()
         {
-            Debug.Log("Init DI Controller");
+            InitSettings();
+            
+            Debugger.Log("Init DI Controller");
+            
             Instance = this;
             DontDestroyOnLoad(gameObject);
             SceneManager.sceneLoaded += OnLoadScene;
 
             Container = new DiContainer();
             Container.BindInstanceSingle(Container);
-            Context.InitEvents(Container);
+            ContainerInitEvents.InitEvents(Container);
             
             if (!Container.ContainsSingle<SavingModule>())
                 Container.BindSingle<SavingModule>();
-            
-            var (projectContextGo, projectContext) = InstallContext<ProjectContext>();
-            var (monoContextGo, monoContext) = InstallContext<MonoContext>();
-            _monoContext = monoContext;
 
-            if (projectContextGo != null)
-            {
-                if (projectContextGo.GetComponent<Runner>() == null)
-                    projectContextGo.AddComponent<Runner>().Init(Container);
-                
-                DontDestroyOnLoad(projectContextGo);
-            }
-            
-            Invoking();
+            ContextInit();
         }
-        private void OnDestroy()
+
+        private void InitSettings()
         {
-            Instance = null;
-            SceneManager.sceneLoaded -= OnLoadScene;
+            if (!Directory.Exists(ResourcesPath))
+                Directory.CreateDirectory(ResourcesPath);
+            SurvDISettings = Resources.Load<SurvDISettings>(SurvDIName);
+            
+            if (SurvDISettings == null)
+            {
+                SurvDISettings = ScriptableObject.CreateInstance<SurvDISettings>();
+                SurvDISettings.name = "SurvDISettings";
+#if UNITY_EDITOR
+                AssetDatabase.CreateAsset(SurvDISettings, SurvDISettingsPath);
+#endif
+            }
+            Debugger.SetSettings(SurvDISettings);
         }
+        private void InstallMonoContext()
+        {
+            var (go, monoContext) = GetOnScene<MonoContext>();
+            if (go == null)
+            {
+                go = new GameObject(nameof(MonoContext));
+                monoContext = go.AddComponent<MonoContext>();
+            }
+
+            if (monoContext == null)
+                monoContext = go.AddComponent<MonoContext>();
+
+            monoContext.Installing(Container);
+            _currentSceneMonoContext = monoContext;
+        }
+        private void InstallProjectContext()
+        {
+            var (go, projectContext) = GetOnScene<ProjectContext>();
+            
+            if (_isHasProjectContext)
+            {
+                if (go != null)
+                    Destroy(go);
+            }
+            else
+            {
+                if (go == null)
+                {
+                    go = new GameObject(nameof(ProjectContext));
+                    projectContext = go.AddComponent<ProjectContext>();
+                }
+                
+                if (go.GetComponent<Runner>() == null)
+                    go.AddComponent<Runner>().Init(Container);
+
+                if (projectContext == null)
+                    projectContext = go.GetComponent<ProjectContext>();
+                
+                projectContext.Installing(Container);
+                
+                DontDestroyOnLoad(go);
+                
+                _isHasProjectContext = true;
+            }
+        }
+        
         private void OnLoadScene(Scene newScene, LoadSceneMode loadSceneMode)
         {
-            var monoContext = GetOnScene<MonoContext>().obj;
-            if (monoContext != null)
-                monoContext.Installing(Container);
+            ContextInit();
+        }
 
-            var projectContext = GetOnScene<ProjectContext>().go;
-            Destroy(projectContext);
+        private void ContextInit()
+        {
+            InstallMonoContext();
+            InstallProjectContext();
             
             Invoking();
         }
-
         private void Invoking()
         {
             Container.LoadSavingAll();
@@ -108,15 +176,6 @@ namespace SurvDI.UnityIntegration
                 }
             }
         }
-        
-        private (GameObject go, T obj) InstallContext<T>() where T : MonoContextBase
-        {
-            var (go, context) = GetOnScene<T>();
-            if (context != null)
-                context.Installing(Container);
-            return (go, context);
-        }
-        
         private static (GameObject go, T obj) GetOnScene<T>() where T : class
         {
             var rootObjs = SceneManager.GetActiveScene().GetRootGameObjects();
@@ -135,16 +194,16 @@ namespace SurvDI.UnityIntegration
 
             return (null, null);
         }
+
+        public static void InjectInstaller(Installer installer)
+        {
+            installer.InstallingInternal(Instance.Container);
+            Instance.Invoking();
+        }
         public static void Inject(GameObject go)
         {
-            var monoContext = Instance._monoContext;
-            if (monoContext == null)
-            {
-                var newMonoContext = new GameObject("MonoContext");
-                monoContext = newMonoContext.AddComponent<MonoContext>();
-                Debug.LogWarning("MonoContext is null, create new MonoContext");
-            }
-            
+            var monoContext = Instance._currentSceneMonoContext;
+          
             var list = go.GetComponents<MonoBehaviour>();
             var container = Instance.Container;
 
@@ -166,9 +225,8 @@ namespace SurvDI.UnityIntegration
             {
                 var go = monoBeh.gameObject;
 
-                var destroyHandler = go.GetComponent<DestroyHandlerContainerUnit>() 
-                                     ?? go.AddComponent<DestroyHandlerContainerUnit>();
-                
+                var destroyHandler = go.GetComponent<DestroyHandlerContainerUnit>() ?? go.AddComponent<DestroyHandlerContainerUnit>();
+
                 destroyHandler.OnDestroyEvent += containerUnit.Dispose;
                 
                 if (isInstalling)

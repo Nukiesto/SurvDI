@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 
 namespace SurvDI.UnityIntegration
 {
+    [DisallowMultipleComponent]
     public class MonoContext : MonoContextBase
     {
         [SerializeField] private Installer[] installers;
@@ -28,13 +29,8 @@ namespace SurvDI.UnityIntegration
         private static void InitInstallersOnScene(DiContainer container, List<object> monoBehavs)
         {
             foreach (var beh in monoBehavs)
-            {
                 if (beh is Installer installer)
-                {
-                    installer.Container = container;
-                    installer.Installing();
-                }
-            }
+                    installer.InstallingInternal(container);
         }
 
         private void OnDestroy()
@@ -50,14 +46,9 @@ namespace SurvDI.UnityIntegration
         protected override void OnInstalling(DiContainer container)
         {
             if (installers != null)
-            {
                 foreach (var installer in installers)
-                {
-                    installer.Container = container;
-                    installer.Installing();
-                }
-            }
-            
+                    installer.InstallingInternal(container);
+
             var list = GetAllMonobehavsOnScene();
             
             if (bindInstancesOnSceneInRuntime)

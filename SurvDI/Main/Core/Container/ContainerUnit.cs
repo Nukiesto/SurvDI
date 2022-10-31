@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using SurvDI.Core.Common;
 using SurvDI.Core.Services.SavingIntegration;
+using UnityEngine;
 
 namespace SurvDI.Core.Container
 {
@@ -276,7 +276,9 @@ namespace SurvDI.Core.Container
                 _canLoadSave = false;
             }
         }
-        
+
+        #region Reflection
+
         public T GetObject<T>()
         {
             return (T)Object;
@@ -286,6 +288,8 @@ namespace SurvDI.Core.Container
         {
             Id = id;
         }
+
+        #endregion
 
         public void Dispose()
         {

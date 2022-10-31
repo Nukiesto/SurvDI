@@ -8,7 +8,7 @@ namespace SurvDI.UnityIntegration
 {
     public abstract class MonoContextBase : MonoBehaviour
     {
-        private readonly List<ContainerUnit> _thisContextUnits = new List<ContainerUnit>();
+        private readonly List<ContainerUnit> _thisContextUnits = new();
 
         private bool _isInstalled;
 

@@ -17,7 +17,6 @@ namespace SurvDI.Core.Container
         {
             return diContainer.BindSingle(typeof(T), injectMode);
         }
-
         public static ContainerUnit BindSingle(this DiContainer diContainer, Type type, InjectMode injectMode = InjectMode.All)
         {
             var unit = new ContainerUnit(diContainer, type, injectMode)
@@ -35,7 +34,6 @@ namespace SurvDI.Core.Container
             diContainer.InvokeBindNewInstance(unit);
             return unit;
         }
-
         
         public static ContainerUnit BindInstanceSingle<T>(this DiContainer diContainer, T instance, InjectMode injectMode = InjectMode.All)
         {
@@ -47,17 +45,19 @@ namespace SurvDI.Core.Container
             {
                 BindingType = BindingType.Single
             };
-            diContainer.AllUnits.Add(unit);
             
+            diContainer.AllUnits.Add(unit);
+
             //Добавляем в сингл словарь
             diContainer.ContainerSingleUnits.Add(type, unit);
             
             //Добавляем в As словарь
             diContainer.AddToAsDic(unit, injectMode);
-        
+            
             diContainer.InvokeBindNewInstance(unit);
             return unit;
         }
+        
         public static ContainerUnit BindMulti<T>(this DiContainer diContainer, InjectMode injectMode = InjectMode.All, bool bindSelf = false)
         {
             return diContainer.BindMulti(typeof(T), injectMode);
@@ -84,6 +84,7 @@ namespace SurvDI.Core.Container
             
             return unit;
         }
+        
         public static ContainerUnit BindInstanceMulti<T>(this DiContainer diContainer, T instance, InjectMode injectMode = InjectMode.All)
         {
             return BindInstanceMulti(diContainer, typeof(T), instance, injectMode);
@@ -105,6 +106,7 @@ namespace SurvDI.Core.Container
             diContainer.InvokeBindNewInstance(unit);
             return unit;
         }
+        
         private static void AddToAsDic(this DiContainer diContainer, ContainerUnit unit, InjectMode injectMode)
         {
             var interfaces = unit.Interfaces;
@@ -126,7 +128,7 @@ namespace SurvDI.Core.Container
                     containerAs[type].Add(unit);
             }
         }
-
+        
         private static void AddToMultyDic(this DiContainer diContainer, ContainerUnit unit)
         {
             diContainer.AddToMultyDic(unit, unit.Type);
