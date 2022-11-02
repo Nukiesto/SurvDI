@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using SurvDI.Application.Interfaces;
 using SurvDI.Core.Common;
 using SurvDI.Core.Services.SavingIntegration;
 using UnityEngine;
@@ -23,29 +24,31 @@ namespace SurvDI.Core.Container
 
         public readonly List<Type> InjectMassTypes = new List<Type>();
 #else
-        public List<Type> Interfaces { get; } = new();
+        internal List<Type> Interfaces { get; } = new();
         private readonly List<Type> _constructorTypes = new();
         private readonly List<(FieldInfo fieldInfo,string id)> _injectTypes     = new();
         private readonly List<(FieldInfo fieldInfo,string id)> _injectMassTypes = new();
 
-        public readonly List<Type> InjectMassTypes = new();
+        internal readonly List<Type> InjectMassTypes = new();
 #endif
-        public string Id { get; private set; }
+        
+        internal string Id { get; private set; }
         
         public Type BaseType { get; }
         public Type Type { get; }
 
         public bool CanInvokeConstructor { get; set; } = true;
-        public bool CanPreInit { get; set; } = true;
-        public bool CanInit { get; set; } = true;
-        public bool CanPostInit { get; set; } = true;
+        
+        private bool _canPreInit = true;
+        private bool _canInit = true;
+        private bool _canPostInit = true;
         private bool _canLoadSave = true;
         
         public event Action OnDisposeEvent;
 
         private bool _isInjected;
         
-        public ContainerUnit(DiContainer diContainer, Type type, InjectMode injectMode = InjectMode.All, object obj = null)
+        internal ContainerUnit(DiContainer diContainer, Type type, InjectMode injectMode = InjectMode.All, object obj = null)
         {
             OnDisposeEvent += () => { diContainer.RemoveUnit(this); };
             
@@ -53,7 +56,9 @@ namespace SurvDI.Core.Container
 
             //Init object
             if (obj == null)
+            {
                 Object = System.Runtime.Serialization.FormatterServices.GetUninitializedObject(Type);
+            }
             else
             {
                 Object = obj;
@@ -62,7 +67,6 @@ namespace SurvDI.Core.Container
             
             //СonstructorTypes
             var constructors = Type.GetConstructors();
-            //Debug.Log("Constructors" + constructors.Length + ":" + type.Name);
             foreach (var constructorInfo in constructors)
             {
                 _constructor = constructorInfo;
@@ -72,7 +76,6 @@ namespace SurvDI.Core.Container
             if (_constructor == null)
             {
                 _constructor = Type.GetConstructor(Type.EmptyTypes);
-                //Debug.Log(type.Name + ":" + _constructor);
             }
                 
             if (_constructor != null)
@@ -85,38 +88,28 @@ namespace SurvDI.Core.Container
             if (_constructor == null)
                 if (CanInvokeConstructor)
                     CanInvokeConstructor = false;
-            //var method = _constructor.
-            //Debug.Log("PreInitContstructor: " + type.Name + 
-            //          "CountTypes:" + _constructorTypes.Count + 
-            //          ";CanInvokeConstr:" + CanInvokeConstructor + 
-            //          ";IsNullConstructor:" + (_constructor != null) +
-            //          ";Constructors:" + constructors.Length);
-        
+            
             //Interfaces
             Interfaces.AddRange(Type.GetInterfaces());
             
-            //Base type
+            //Init base type
             if (Type.BaseType != typeof(object) && (injectMode == InjectMode.BaseTypeAndSelf || injectMode == InjectMode.All))
                 BaseType = Type.BaseType;
                 
             //InjectTypes
-            var fields = Type.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public).ToList();
+            var allFields = Type.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public).ToList();
             
             if (BaseType != null)
-                fields.AddRange(BaseType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public));
+                allFields.AddRange(BaseType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public));
+
+            var multyInjectFields = GetFields<InjectMultiAttribute>();
+            var singleInjectFields = GetFields<InjectAttribute>();
             
-            var fieldsSingle = fields.Where(s => s.GetCustomAttribute<InjectAttribute>() != null).ToList();
-            var fieldsTuple = new List<(FieldInfo f, string s)>();
-            fieldsTuple.AddRange(fieldsSingle.Select(s => (s, s.GetCustomAttribute<InjectAttribute>().Id)));
-            _injectTypes.AddRange(fieldsTuple.Select(s => (s.f, s.s)));
-            
-            var fieldsMulty = fields.Where(s => s.GetCustomAttribute<InjectMultiAttribute>() != null).ToList();
-            var fieldsMultiTuple = new List<(FieldInfo f, string s)>();
-            fieldsMultiTuple.AddRange(fieldsMulty.Select(s => (s, s.GetCustomAttribute<InjectMultiAttribute>().Id)));
-            _injectMassTypes.AddRange(fieldsMultiTuple.Select(s => (s.f, s.s)));
-            
+            _injectTypes.AddRange(GetTupleListInjects<InjectAttribute>(singleInjectFields));
+            _injectMassTypes.AddRange(GetTupleListInjects<InjectMultiAttribute>(multyInjectFields));
+
             //InjectMassTypes
-            InjectMassTypes.AddRange(fieldsMulty.Select(s => s.FieldType.GetGenericArguments()[0]));
+            InjectMassTypes.AddRange(multyInjectFields.Select(s => s.FieldType.GetGenericArguments()[0]));
             foreach (var elementType in InjectMassTypes)
             {
                 if (diContainer.ContainersMultyNeed.ContainsKey(elementType))
@@ -124,16 +117,18 @@ namespace SurvDI.Core.Container
                 else
                     diContainer.ContainersMultyNeed.Add(elementType, new List<ContainerUnit>{this});
             }
-            
-            //Debug.Log("Init: " + type.Name + 
-            //                ":" + _constructorTypes.Count + 
-            //                ":" + CanInvokeConstructor + 
-            //                ":" + (_constructor != null));
+
+            IEnumerable<(FieldInfo fieldInfo,string id)> GetTupleListInjects<T>(IEnumerable<FieldInfo> list) where T : InjectBaseAttribute
+            {
+                return list.Select(s => (s, s.GetCustomAttribute<T>().Id)).Select(s => (s.s, s.Id));
+            }
+            List<FieldInfo> GetFields<T>() where T : Attribute
+            {
+                return allFields.Where(s => s.GetCustomAttribute<T>() != null).ToList();
+            }
         }
-#if NET_4_6
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public void InvokeConstructorInit(DiContainer diContainer)
+
+        internal void InvokeConstructorInit(DiContainer diContainer)
         {
             if (!CanInvokeConstructor) 
                 return;
@@ -149,10 +144,7 @@ namespace SurvDI.Core.Container
             _constructor.Invoke(Object,  injectNeed.ToArray());
             CanInvokeConstructor = false;
         }
-#if NET_4_6
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public void InvokeInjectsOnInit(DiContainer diContainer)
+        internal void InvokeInjectsOnInit(DiContainer diContainer)
         {
             if (_isInjected)
                 return;
@@ -192,7 +184,9 @@ namespace SurvDI.Core.Container
                 {
                     var listType = typeof(List<>).MakeGenericType(elementType);
                     var list = Activator.CreateInstance(listType);
-                    var getObjectMethod = typeof(ContainerUnit).GetMethod("GetObject")?.MakeGenericMethod(elementType);
+                    Debug.Log(nameof(GetObject));
+
+                    var getObjectMethod = typeof(ContainerUnit).GetMethod(nameof(GetObject))?.MakeGenericMethod(elementType);
                     var methodAdd = listType.GetMethod("Add");
 
                     if (getObjectMethod != null && methodAdd != null)
@@ -206,10 +200,8 @@ namespace SurvDI.Core.Container
                 }
             }
         }
-#if NET_4_6
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public void AddNewMulty(Type type, ContainerUnit containerUnit)
+        
+        internal void AddNewMulty(Type type, ContainerUnit containerUnit)
         {
             foreach (var (fieldInfo, id) in _injectMassTypes)
             {
@@ -238,8 +230,7 @@ namespace SurvDI.Core.Container
                 }
             }
         }
-
-        public void RemoveMulty(Type type, ContainerUnit containerUnit)
+        internal void RemoveMulty(Type type, ContainerUnit containerUnit)
         {
             var toRemove = containerUnit.Object;
             if (toRemove == null)
@@ -268,33 +259,74 @@ namespace SurvDI.Core.Container
                 }
             }
         }
+        
         public void LoadSaveable()
         {
-            if (_canLoadSave)
+            if (_canLoadSave && BindingType == BindingType.Single)
             {
                 SavingModule.LoadAll(Type, Object);
                 _canLoadSave = false;
             }
         }
+        
+        public void Dispose()
+        {
+            if (BindingType == BindingType.Single)
+                SavingModule.SaveAll(Type, Object);
+            OnDisposeEvent?.Invoke();
+        }
 
+        internal void InvokePreinit()
+        {
+            if (_canPreInit)
+            {
+                _canPreInit = false;
+                if (Object is IPreInit init)
+                    init.PreInit();
+            }
+        }
+        internal void InvokeInit()
+        {
+            if (_canInit)
+            {
+                _canInit = false;
+                if (Object is IInit init)
+                    init.Init();
+            }
+        }
+        internal void InvokePostInit()
+        {
+            if (_canPostInit)
+            {
+                _canPostInit = false;
+                if (Object is IPostInit init)
+                    init.PostInit();
+            }
+        }
+        internal void InvokeAllInit()
+        {
+           InvokePreinit();
+           InvokeInit();
+           InvokePostInit();
+        }
+        internal void InvokeDisposable()
+        {
+            if (Object is IDisposable disposable)
+                disposable.Dispose();
+        }
         #region Reflection
 
+        // ReSharper disable once UnusedMember.Global
         public T GetObject<T>()
         {
             return (T)Object;
         }
-
+        // ReSharper disable once UnusedMember.Global
         public void WithId(string id)
         {
             Id = id;
         }
 
         #endregion
-
-        public void Dispose()
-        {
-            SavingModule.SaveAll(Type, Object);
-            OnDisposeEvent?.Invoke();
-        }
     }
 }

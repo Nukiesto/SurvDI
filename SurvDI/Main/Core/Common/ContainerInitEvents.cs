@@ -14,9 +14,6 @@ namespace SurvDI.Core.Common
 
         private static void OnBindForMultyNeed(DiContainer container, ContainerUnit s)
         {
-            //s.InvokeInjectsOnInit(container);
-            //s.InvokeConstructorInit(container);
-
             var types = new List<Type>();
             types.AddRange(s.Interfaces);
             types.Add(s.BaseType);
@@ -36,8 +33,7 @@ namespace SurvDI.Core.Common
         }
         private static void OnRemoveDispose(DiContainer container, ContainerUnit s)
         {
-            if (s.Object is IDisposable disposable)
-                disposable.Dispose();
+            s.InvokeDisposable();
         }
     }
 }

@@ -33,9 +33,13 @@ namespace SurvDI.UnityIntegration
         [RuntimeInitializeOnLoadMethod]
         private static void EnterPlayMode()
         {
-            new GameObject(nameof(DiController)).AddComponent<DiController>();
+            OnEnterPlaymode();
         }
 
+        public static void OnEnterPlaymode()
+        {
+            new GameObject(nameof(DiController)).AddComponent<DiController>();
+        }
         private void Awake()
         {
             Init();
@@ -45,6 +49,7 @@ namespace SurvDI.UnityIntegration
             Instance = null;
             SceneManager.sceneLoaded -= OnLoadScene;
         }
+        
         private void Init()
         {
             InitSettings();
@@ -147,34 +152,13 @@ namespace SurvDI.UnityIntegration
             
             var toPreInits = Container.GetInterfaceUnitsContainers<IPreInit>();
             foreach (var containerUnit in toPreInits)
-            {
-                if (containerUnit.CanPreInit)
-                {
-                    containerUnit.CanPreInit = false;
-                    if (containerUnit.Object is IPreInit init)
-                        init.PreInit();
-                }
-            }
+                containerUnit.InvokePreinit();
             var toInits = Container.GetInterfaceUnitsContainers<IInit>();
             foreach (var containerUnit in toInits)
-            {
-                if (containerUnit.CanInit)
-                {
-                    containerUnit.CanInit = false;
-                    if (containerUnit.Object is IInit init)
-                        init.Init();
-                }
-            }
+                containerUnit.InvokeInit();
             var toPostInits = Container.GetInterfaceUnitsContainers<IPostInit>();
             foreach (var containerUnit in toPostInits)
-            {
-                if (containerUnit.CanPostInit)
-                {
-                    containerUnit.CanPostInit = false;
-                    if (containerUnit.Object is IPostInit init)
-                        init.PostInit();
-                }
-            }
+                containerUnit.InvokePostInit();
         }
         private static (GameObject go, T obj) GetOnScene<T>() where T : class
         {
@@ -200,22 +184,23 @@ namespace SurvDI.UnityIntegration
             installer.InstallingInternal(Instance.Container);
             Instance.Invoking();
         }
-        public static void Inject(GameObject go)
+        public static void InjectGameObject(GameObject go)
+        {
+            var list = go.GetComponents<MonoBehaviour>();
+            
+            foreach (var monoBehaviour in list)
+                InjectMonoBeh(monoBehaviour);
+        }
+
+        public static void InjectMonoBeh(MonoBehaviour monobeh)
         {
             var monoContext = Instance._currentSceneMonoContext;
-          
-            var list = go.GetComponents<MonoBehaviour>();
-            var container = Instance.Container;
-
-            foreach (var monoBehaviour in list)
-            {
-                var containerUnit = InitBeh(monoBehaviour, container);
-                if (containerUnit == null) continue;
+            
+            var containerUnit = InitBeh(monobeh);
+            if (containerUnit == null) return;
                 
-                InitNewInstance(containerUnit, false);
-                if (monoContext != null)
-                    monoContext.AddNewInstanceThisContext(containerUnit);
-            }
+            InitNewInstance(containerUnit, false);
+            monoContext.AddNewInstanceThisContext(containerUnit);
         }
         public static void InitNewInstance(ContainerUnit containerUnit, bool isInstalling)
         {
@@ -233,45 +218,28 @@ namespace SurvDI.UnityIntegration
                     return;
                 containerUnit.LoadSaveable();
                 containerUnit.InvokeInjectsOnInit(container);
-                
-                if (containerUnit.CanPreInit)
-                {
-                    containerUnit.CanPreInit = false;
-                    if (containerUnit.Object is IPreInit init)
-                        init.PreInit();
-                }
-                if (containerUnit.CanInit)
-                {
-                    containerUnit.CanInit = false;
-                    if (containerUnit.Object is IInit init)
-                        init.Init();
-                }
-                if (containerUnit.CanPostInit)
-                {
-                    containerUnit.CanPostInit = false;
-                    if (containerUnit.Object is IPostInit init)
-                        init.PostInit();
-                }
+                containerUnit.InvokeAllInit();
             }
         }
-        public static ContainerUnit InitBeh(object beh, DiContainer container)
+        public static ContainerUnit InitBeh(object monobeh)
         {
-            var type = beh.GetType();
+            var container = Instance.Container;
+            var type = monobeh.GetType();
             var attr = (BindAttribute) type.GetCustomAttribute(typeof(BindAttribute));
             if (attr == null)
                 return null;
             // ReSharper disable once ConvertIfStatementToReturnStatement
             if (attr.Multy)
-                return container.BindInstanceMulti(type, beh, attr.InjectMode);
-            return container.BindInstanceSingle(type, beh, attr.InjectMode);
+                return container.BindInstanceMulti(type, monobeh, attr.InjectMode);
+            return container.BindInstanceSingle(type, monobeh, attr.InjectMode);
         }
-        public static void InjectInstances(DiContainer container, List<object> monoBehavs)
+        public static void InjectInstances(List<object> monoBehavs)
         {
             foreach (var beh in monoBehavs)
             {
                 if (beh == null)
                     continue;
-                InitBeh(beh, container);
+                InitBeh(beh);
             }
         }
     }

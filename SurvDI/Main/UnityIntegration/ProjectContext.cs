@@ -24,12 +24,10 @@ namespace SurvDI.UnityIntegration
             if (installers != null)
             {
                 foreach (var installer in installers)
-                {
                     installer.InstallingInternal(container);
-                }
 
                 var list = GetComponents<MonoBehaviour>().Cast<object>().ToList();
-                DiController.InjectInstances(container, list);
+                DiController.InjectInstances(list);
             }
         }
 

@@ -3,11 +3,16 @@ using JetBrains.Annotations;
 
 namespace SurvDI.Core.Common
 {
-    [AttributeUsage(AttributeTargets.Field)]
-    [MeansImplicitUse(ImplicitUseKindFlags.Assign)]
-    public class InjectAttribute : Attribute
+    public abstract class InjectBaseAttribute : Attribute
     {
         public string Id = "";
+    }
+    
+    [AttributeUsage(AttributeTargets.Field)]
+    [MeansImplicitUse(ImplicitUseKindFlags.Assign)]
+    public class InjectAttribute : InjectBaseAttribute
+    {
+       
     }
 
     /// <summary>
@@ -15,8 +20,8 @@ namespace SurvDI.Core.Common
     /// </summary>
     [AttributeUsage(AttributeTargets.Field)]
     [MeansImplicitUse(ImplicitUseKindFlags.Assign)]
-    public class InjectMultiAttribute : Attribute
+    public class InjectMultiAttribute : InjectBaseAttribute
     {
-        public string Id = "";
+        
     }
 }

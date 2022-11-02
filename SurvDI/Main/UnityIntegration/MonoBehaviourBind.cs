@@ -8,7 +8,7 @@ namespace SurvDI.UnityIntegration
     {
         private void Awake()
         {
-            DiController.Inject(gameObject);
+            DiController.InjectGameObject(gameObject);
         }
     }
 }

@@ -50,9 +50,9 @@ namespace SurvDI.UnityIntegration
                     installer.InstallingInternal(container);
 
             var list = GetAllMonobehavsOnScene();
-            
+            InitInstallersOnScene(container, list);
             if (bindInstancesOnSceneInRuntime)
-                DiController.InjectInstances(container, list);
+                DiController.InjectInstances(list);
         }
 
         protected override void OnPostInstalling(DiContainer container)
