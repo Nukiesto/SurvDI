@@ -52,8 +52,9 @@ namespace SurvDI.UnityIntegration
         
         private void Init()
         {
+#if UNITY_EDITOR
             InitSettings();
-            
+#endif
             Debugger.Log("Init DI Controller");
             
             Instance = this;

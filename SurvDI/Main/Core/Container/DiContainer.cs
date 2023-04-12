@@ -110,7 +110,7 @@ namespace SurvDI.Core.Container
         public void RemoveUnit(ContainerUnit containerUnit)
         {
             OnRemoveInstanceEvent?.Invoke(this, containerUnit);
-            Debug.Log($"Remove: {containerUnit.Type}");
+            //Debug.Log($"Remove: {containerUnit.Type}");
             if (ContainerSingleUnits.ContainsKey(containerUnit.Type))
                 ContainerSingleUnits.Remove(containerUnit.Type);
             if (ContainerAsTypeUnits.ContainsKey(containerUnit.Type))
@@ -122,7 +122,7 @@ namespace SurvDI.Core.Container
                 if (ContainersMultyNeed[containerUnit.Type].Contains(containerUnit))
                     ContainersMultyNeed[containerUnit.Type].Remove(containerUnit);
             
-            Debug.Log(ContainerSingleUnits.ContainsKey(containerUnit.Type));
+            //Debug.Log(ContainerSingleUnits.ContainsKey(containerUnit.Type));
         }
     }
 }

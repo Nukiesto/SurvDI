@@ -184,7 +184,7 @@ namespace SurvDI.Core.Container
                 {
                     var listType = typeof(List<>).MakeGenericType(elementType);
                     var list = Activator.CreateInstance(listType);
-                    Debug.Log(nameof(GetObject));
+                    //Debug.Log(nameof(GetObject));
 
                     var getObjectMethod = typeof(ContainerUnit).GetMethod(nameof(GetObject))?.MakeGenericMethod(elementType);
                     var methodAdd = listType.GetMethod("Add");
