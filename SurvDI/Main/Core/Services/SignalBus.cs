@@ -13,22 +13,17 @@ namespace SurvDI.Core.Services
     {
         public readonly Type SignalType;
         
-        private readonly List<Action<ISignal>> _subsribes = new List<Action<ISignal>>();
-        private readonly List<Action> _subsribes2 = new List<Action>();
+        private readonly List<Action<ISignal>> _subsribes = new();
+        private readonly List<Action> _subsribes2 = new();
         
         public Signal(Type signalType)
         {
             SignalType = signalType;
         }
 
-        public void Subscribe<T>(Action<T> action)
+        public void Subscribe<T>(Action<T> action) where T : struct, ISignal
         {
-            void ActionIn(ISignal signal)
-            {
-                action.Method.Invoke(action.Target, new object[] {signal});
-            }
-
-            _subsribes.Add(ActionIn);
+            _subsribes.Add(signal => { action.Invoke((T)signal); });
         }
 
         public void Subscribe(Action action)
@@ -71,22 +66,22 @@ namespace SurvDI.Core.Services
             foreach (var signal in signals)
                 _signals.Add(signal.SignalType, signal);
         }
-        public void Fire<T>() where T : struct
+        public void Fire<T>() where T : struct, ISignal
         {
             if (_signals.TryGetValue(typeof(T), out var signal))
                 signal.Fire();
         }
-        public void Fire<T>(T signal) where T : struct
+        public void Fire<T>(T signal) where T : struct, ISignal
         {
             if (_signals.TryGetValue(typeof(T), out var signalT))
-                signalT.Fire((ISignal)signal);
+                signalT.Fire(signal);
         }
-        public void Subscribe<T>(Action<T> action) where T : struct
+        public void Subscribe<T>(Action<T> action) where T : struct, ISignal
         {
             if (_signals.TryGetValue(typeof(T), out var signalT))
                 signalT.Subscribe(action);
         }
-        public void Subscribe<T>(Action action) where T : struct
+        public void Subscribe<T>(Action action) where T : struct, ISignal
         {
             if (_signals.TryGetValue(typeof(T), out var signalT))
                 signalT.Subscribe(action);

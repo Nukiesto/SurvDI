@@ -1,6 +1,6 @@
 {
   "name": "com.nukiesto.survdi",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "displayName": "SurvDI",
   "description": "Simple to use DI Container",
   "dependencies": {
