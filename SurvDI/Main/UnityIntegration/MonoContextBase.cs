@@ -37,18 +37,18 @@ namespace SurvDI.UnityIntegration
                     _thisContextUnits.Remove(unit);
             };
         }
-        protected abstract void OnInstalling(DiContainer container);
-        protected abstract void OnPreInstalling(DiContainer container);
-        protected abstract void OnPostInstalling(DiContainer container);
+        protected abstract void OnInstalling(DiContainer container, int sceneId);
+        protected abstract void OnPreInstalling(DiContainer container, int sceneId);
+        protected abstract void OnPostInstalling(DiContainer container, int sceneId);
        
-        public void Installing(DiContainer container)
+        public void Installing(DiContainer container, int sceneId)
         {
             if (!_isInstalled)
             {
                 _isInstalled = true;
-                OnPreInstalling(container);
-                OnInstalling(container);
-                OnPostInstalling(container);
+                OnPreInstalling(container, sceneId);
+                OnInstalling(container, sceneId);
+                OnPostInstalling(container, sceneId);
             }
         }
     }

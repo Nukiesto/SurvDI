@@ -14,12 +14,12 @@ namespace SurvDI.UnityIntegration
             OnDestroyInvoke();
         }
 
-        protected override void OnPreInstalling(DiContainer container)
+        protected override void OnPreInstalling(DiContainer container, int sceneId)
         {
             container.OnBindNewInstanceEvent += OnBindNewToInitThisContextUnits;
         }
 
-        protected override void OnInstalling(DiContainer container)
+        protected override void OnInstalling(DiContainer container, int sceneId)
         {
             if (installers != null)
             {
@@ -31,7 +31,7 @@ namespace SurvDI.UnityIntegration
             }
         }
 
-        protected override void OnPostInstalling(DiContainer container)
+        protected override void OnPostInstalling(DiContainer container, int sceneId)
         {
             container.OnBindNewInstanceEvent -= OnBindNewToInitThisContextUnits;
         }

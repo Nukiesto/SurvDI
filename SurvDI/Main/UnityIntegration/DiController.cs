@@ -99,7 +99,7 @@ namespace SurvDI.UnityIntegration
             if (monoContext == null)
                 monoContext = go.AddComponent<MonoContext>();
 
-            monoContext.Installing(Container);
+            monoContext.Installing(Container, sceneId);
             _currentSceneMonoContext = monoContext;
         }
         private void InstallProjectContext(int sceneId)
@@ -125,7 +125,7 @@ namespace SurvDI.UnityIntegration
                 if (projectContext == null)
                     projectContext = go.GetComponent<ProjectContext>();
                 
-                projectContext.Installing(Container);
+                projectContext.Installing(Container, sceneId);
                 
                 DontDestroyOnLoad(go);
                 

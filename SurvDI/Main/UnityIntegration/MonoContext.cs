@@ -11,10 +11,10 @@ namespace SurvDI.UnityIntegration
         [SerializeField] private Installer[] installers;
         [SerializeField] private bool bindInstancesOnSceneInRuntime = true;
 
-        private static List<object> GetAllMonobehavsOnScene()
+        private static List<object> GetAllMonobehavsOnScene(int sceneId)
         {
             var monoBehavs = new List<object>();
-            var rootObjs = SceneManager.GetActiveScene().GetRootGameObjects();
+            var rootObjs = SceneManager.GetSceneByBuildIndex(sceneId).GetRootGameObjects();
 
             foreach (var root in rootObjs)
             {
@@ -38,24 +38,24 @@ namespace SurvDI.UnityIntegration
             OnDestroyInvoke();
         }
 
-        protected override void OnPreInstalling(DiContainer container)
+        protected override void OnPreInstalling(DiContainer container, int sceneId)
         {
             container.OnBindNewInstanceEvent += OnBindNewToInitThisContextUnits;
         }
 
-        protected override void OnInstalling(DiContainer container)
+        protected override void OnInstalling(DiContainer container, int sceneId)
         {
             if (installers != null)
                 foreach (var installer in installers)
                     installer.InstallingInternal(container);
 
-            var list = GetAllMonobehavsOnScene();
+            var list = GetAllMonobehavsOnScene(sceneId);
             InitInstallersOnScene(container, list);
             if (bindInstancesOnSceneInRuntime)
                 DiController.InjectInstances(list);
         }
 
-        protected override void OnPostInstalling(DiContainer container)
+        protected override void OnPostInstalling(DiContainer container, int sceneId)
         {
             container.OnBindNewInstanceEvent -= OnBindNewToInitThisContextUnits;
         }
