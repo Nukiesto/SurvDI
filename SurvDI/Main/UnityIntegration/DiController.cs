@@ -68,7 +68,7 @@ namespace SurvDI.UnityIntegration
             if (!Container.ContainsSingle<SavingModule>())
                 Container.BindSingle<SavingModule>();
 
-            ContextInit();
+            ContextInit(SceneManager.GetActiveScene().buildIndex);
         }
 
         private void InitSettings()
@@ -87,9 +87,9 @@ namespace SurvDI.UnityIntegration
             }
             Debugger.SetSettings(SurvDISettings);
         }
-        private void InstallMonoContext()
+        private void InstallMonoContext(int sceneId)
         {
-            var (go, monoContext) = GetOnScene<MonoContext>();
+            var (go, monoContext) = GetOnScene<MonoContext>(sceneId);
             if (go == null)
             {
                 go = new GameObject(nameof(MonoContext));
@@ -102,9 +102,9 @@ namespace SurvDI.UnityIntegration
             monoContext.Installing(Container);
             _currentSceneMonoContext = monoContext;
         }
-        private void InstallProjectContext()
+        private void InstallProjectContext(int sceneId)
         {
-            var (go, projectContext) = GetOnScene<ProjectContext>();
+            var (go, projectContext) = GetOnScene<ProjectContext>(sceneId);
             
             if (_isHasProjectContext)
             {
@@ -135,13 +135,13 @@ namespace SurvDI.UnityIntegration
         
         private void OnLoadScene(Scene newScene, LoadSceneMode loadSceneMode)
         {
-            ContextInit();
+            ContextInit(newScene.buildIndex);
         }
 
-        private void ContextInit()
+        private void ContextInit(int sceneId)
         {
-            InstallMonoContext();
-            InstallProjectContext();
+            InstallMonoContext(sceneId);
+            InstallProjectContext(sceneId);
             
             Invoking();
         }
@@ -161,9 +161,9 @@ namespace SurvDI.UnityIntegration
             foreach (var containerUnit in toPostInits)
                 containerUnit.InvokePostInit();
         }
-        private static (GameObject go, T obj) GetOnScene<T>() where T : class
+        private static (GameObject go, T obj) GetOnScene<T>(int sceneId) where T : class
         {
-            var rootObjs = SceneManager.GetActiveScene().GetRootGameObjects();
+            var rootObjs = SceneManager.GetSceneByBuildIndex(sceneId).GetRootGameObjects();
             var nameT = typeof(T).Name;
             foreach (var root in rootObjs)
             {
