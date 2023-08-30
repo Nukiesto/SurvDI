@@ -4,6 +4,7 @@ using System.Reflection;
 using SurvDI.Application.Interfaces;
 using SurvDI.Core.Common;
 using SurvDI.Core.Container;
+using SurvDI.Core.Services.EventControllerIntegration;
 using SurvDI.Core.Services.SavingIntegration;
 using SurvDI.UnityIntegration.Debugging;
 using SurvDI.UnityIntegration.Settings;
@@ -67,7 +68,10 @@ namespace SurvDI.UnityIntegration
             
             if (!Container.ContainsSingle<SavingModule>())
                 Container.BindSingle<SavingModule>();
-
+            
+            if (!Container.ContainsSingle<EventModuleManager>())
+                Container.BindInstanceSingle(new EventModuleManager());
+            
             ContextInit(SceneManager.GetActiveScene().buildIndex);
         }
 
@@ -147,7 +151,7 @@ namespace SurvDI.UnityIntegration
         }
         private void Invoking()
         {
-            Container.LoadSavingAll();
+            Container.InitModulesAll();
             Container.InvokeInjectAll();
             Container.InvokeConstructorsAll();
             
@@ -217,7 +221,7 @@ namespace SurvDI.UnityIntegration
                 
                 if (isInstalling)
                     return;
-                containerUnit.LoadSaveable();
+                containerUnit.InitModules();
                 containerUnit.InvokeInjectsOnInit(container);
                 containerUnit.InvokeAllInit();
             }

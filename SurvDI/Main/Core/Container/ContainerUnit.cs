@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using SurvDI.Application.Interfaces;
 using SurvDI.Core.Common;
+using SurvDI.Core.Services.EventControllerIntegration;
 using SurvDI.Core.Services.SavingIntegration;
 using UnityEngine;
 
@@ -31,6 +32,7 @@ namespace SurvDI.Core.Container
 
         internal readonly List<Type> InjectMassTypes = new();
 #endif
+        private readonly FieldInfo _eventModuleField;
         
         internal string Id { get; private set; }
         
@@ -47,9 +49,13 @@ namespace SurvDI.Core.Container
         public event Action OnDisposeEvent;
 
         private bool _isInjected;
+
+        private DiContainer _diContainer;
+        
         
         internal ContainerUnit(DiContainer diContainer, Type type, InjectMode injectMode = InjectMode.All, object obj = null)
         {
+            _diContainer = diContainer;
             OnDisposeEvent += () => { diContainer.RemoveUnit(this); };
             
             Type = type;
@@ -88,6 +94,7 @@ namespace SurvDI.Core.Container
             if (_constructor == null)
                 if (CanInvokeConstructor)
                     CanInvokeConstructor = false;
+          
             
             //Interfaces
             Interfaces.AddRange(Type.GetInterfaces());
@@ -107,7 +114,10 @@ namespace SurvDI.Core.Container
             
             _injectTypes.AddRange(GetTupleListInjects<InjectAttribute>(singleInjectFields));
             _injectMassTypes.AddRange(GetTupleListInjects<InjectMultiAttribute>(multyInjectFields));
-
+            
+            //EventModule
+            _eventModuleField = allFields.FirstOrDefault(s => s.FieldType == typeof(EventModule));
+            
             //InjectMassTypes
             InjectMassTypes.AddRange(multyInjectFields.Select(s => s.FieldType.GetGenericArguments()[0]));
             foreach (var elementType in InjectMassTypes)
@@ -153,9 +163,8 @@ namespace SurvDI.Core.Container
             {
                 var type = fieldInfo.FieldType;
                 
-                if (diContainer.ContainerSingleUnits.ContainsKey(type))
+                if (diContainer.ContainerSingleUnits.TryGetValue(type, out var unit))
                 {
-                    var unit = diContainer.ContainerSingleUnits[type];
                     if (id != "" && unit.Id != id)
                         continue;
                     fieldInfo.SetValue(Object, unit.Object);
@@ -171,12 +180,12 @@ namespace SurvDI.Core.Container
                 var listSource = new List<ContainerUnit>();
                 
                 var asUnits = diContainer.ContainerAsTypeUnits;
-                if (asUnits.ContainsKey(elementType))
-                    listSource.AddRange(asUnits[elementType]);
+                if (asUnits.TryGetValue(elementType, out var unit))
+                    listSource.AddRange(unit);
                 
                 var multiUnits = diContainer.ContainerMultiUnits;
-                if (multiUnits.ContainsKey(elementType))
-                    listSource.AddRange(multiUnits[elementType]);
+                if (multiUnits.TryGetValue(elementType, out var multiUnit))
+                    listSource.AddRange(multiUnit);
                 
                 if (id != "")
                     listSource = listSource.Where(s => s.Id == id).ToList();
@@ -260,17 +269,31 @@ namespace SurvDI.Core.Container
             }
         }
         
-        public void LoadSaveable()
+        public void InitModules()
         {
             if (_canLoadSave && BindingType == BindingType.Single)
             {
                 SavingModule.LoadAll(Type, Object);
                 _canLoadSave = false;
             }
+
+            if (_eventModuleField != null)
+            {
+                if (_eventModuleField.GetValue(Object) == null)
+                    _eventModuleField.SetValue(Object, new EventModule());
+                
+                if (_eventModuleField.GetValue(Object) is EventModule eventModule)
+                    if (_diContainer.TryResolveSingle<EventModuleManager>(out var eventModuleManager))
+                        eventModule.Init(eventModuleManager);
+            }
         }
         
         public void Dispose()
         {
+            if (_eventModuleField != null)
+                if (_eventModuleField.GetValue(Object) is EventModule eventModule)
+                    eventModule.Dispose();
+
             if (BindingType == BindingType.Single)
                 SavingModule.SaveAll(Type, Object);
             OnDisposeEvent?.Invoke();

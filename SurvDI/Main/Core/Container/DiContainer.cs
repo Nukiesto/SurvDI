@@ -48,9 +48,37 @@ namespace SurvDI.Core.Container
 
             return list;
         }
+     
+        public bool TryResolveSingle<T>(out T obj)
+        {
+            if (TryResolveSingle(typeof(T), out var obj2))
+            {
+                if (obj2 is T obj3)
+                {
+                    obj = obj3;
+                    return true;
+                }
+            }
+
+            obj = default;
+            return false;
+        }
+
+        public bool TryResolveSingle(Type type, out object obj)
+        {
+            if (ContainsSingle(type))
+            {
+                obj = ResolveSingle(type);
+                return true;
+            }
+
+            obj = null;
+            return ContainsSingle(type);
+        }
+
         public T ResolveSingle<T>()
         {
-            return (T)ContainerSingleUnits[typeof(T)].Object;
+            return (T)ResolveSingle(typeof(T));
         }
         public object ResolveSingle(Type type)
         {
@@ -59,7 +87,7 @@ namespace SurvDI.Core.Container
         
         public bool ContainsSingle<T>()
         {
-            return ContainerSingleUnits.ContainsKey(typeof(T));
+            return ContainsSingle(typeof(T));
         }
         public bool ContainsSingle(Type type)
         {
@@ -80,11 +108,11 @@ namespace SurvDI.Core.Container
                 containerUnit.InvokeInjectsOnInit(this);
         }
 
-        public void LoadSavingAll()
+        public void InitModulesAll()
         {
             var copy = AllUnits.ToArray();
             foreach (var containerUnit in copy)
-                containerUnit.LoadSaveable();
+                containerUnit.InitModules();
         }
         public List<T> GetInterfaceUnits<T>()
         {
