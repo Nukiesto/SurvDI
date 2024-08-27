@@ -67,9 +67,16 @@ namespace SurvDI.Core.Services.SavingIntegration
                     }
                     else
                     {
-                        var valueGet = fieldInfo.GetValue(obj) ?? Activator.CreateInstance(fieldInfo.FieldType);
-                        saveData.Units.Add(fieldInfo.Name, new SavingData.Unit(valueGet));
-                        fieldInfo.SetValue(obj, valueGet);
+                        try
+                        {
+                            var valueGet = fieldInfo.GetValue(obj) ?? Activator.CreateInstance(fieldInfo.FieldType);
+                            saveData.Units.Add(fieldInfo.Name, new SavingData.Unit(valueGet));
+                            fieldInfo.SetValue(obj, valueGet);
+                        }
+                        catch (Exception e)
+                        {
+                            fieldInfo.SetValue(obj, default);
+                        }
                     }
                 }
                 DataSaver.Save(GetName(classType), saveData);
