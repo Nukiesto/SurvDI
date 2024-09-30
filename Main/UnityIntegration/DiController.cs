@@ -31,27 +31,18 @@ namespace SurvDI.UnityIntegration
         private const string SurvDISettingsPath = "Assets/Resources/" + SurvDIName + ".asset";
         private static string ResourcesPath => UnityEngine.Application.dataPath + "/Resources";
         
-        [RuntimeInitializeOnLoadMethod]
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
         private static void EnterPlayMode()
-        {
-            OnEnterPlaymode();
-        }
-
-        public static void OnEnterPlaymode()
         {
             new GameObject(nameof(DiController)).AddComponent<DiController>();
         }
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        public static void OnEnterPlaymode()
+        {
+            Instance.Init();
+        }
+
         private void Awake()
-        {
-            Init();
-        }
-        private void OnDestroy()
-        {
-            Instance = null;
-            SceneManager.sceneLoaded -= OnLoadScene;
-        }
-        
-        private void Init()
         {
 #if UNITY_EDITOR
             InitSettings();
@@ -64,6 +55,7 @@ namespace SurvDI.UnityIntegration
 
             Container = new DiContainer();
             Container.BindInstanceSingle(Container);
+            
             ContainerInitEvents.InitEvents(Container);
             
             if (!Container.ContainsSingle<SavingModule>())
@@ -71,7 +63,16 @@ namespace SurvDI.UnityIntegration
             
             if (!Container.ContainsSingle<EventModuleManager>())
                 Container.BindInstanceSingle(new EventModuleManager());
-            
+        }
+        
+        private void OnDestroy()
+        {
+            Instance = null;
+            SceneManager.sceneLoaded -= OnLoadScene;
+        }
+        
+        private void Init()
+        {
             ContextInit(SceneManager.GetActiveScene().buildIndex);
         }
 
@@ -201,11 +202,13 @@ namespace SurvDI.UnityIntegration
 
         public static void InjectMonoBeh(MonoBehaviour monobeh)
         {
+            if (monobeh == null)
+                return;
             var monoContext = Instance._currentSceneMonoContext;
             
             var containerUnit = InitBeh(monobeh);
             if (containerUnit == null) return;
-                
+          
             InitNewInstance(containerUnit, false);
             monoContext.AddNewInstanceThisContext(containerUnit);
         }
