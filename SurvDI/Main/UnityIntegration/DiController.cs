@@ -139,13 +139,15 @@ namespace SurvDI.UnityIntegration
         
         private void OnLoadScene(Scene newScene, LoadSceneMode loadSceneMode)
         {
+            if (newScene.name.Contains("SubScene"))
+                return; 
             ContextInit(newScene.buildIndex);
         }
 
         private void ContextInit(int sceneId)
         {
-            InstallMonoContext(sceneId);
             InstallProjectContext(sceneId);
+            InstallMonoContext(sceneId);
             
             Invoking();
         }
