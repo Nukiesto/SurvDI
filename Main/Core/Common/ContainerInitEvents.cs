@@ -28,7 +28,7 @@ namespace SurvDI.Core.Common
                     
                 var listNeed = container.ContainersMultyNeed[type];
                 foreach (var containerUnit in listNeed)
-                    containerUnit.AddNewMulty(type, s);
+                    containerUnit.AddNewMulti(type, s);
             }
         }
         private static void OnRemoveDispose(DiContainer container, ContainerUnit s)

@@ -160,7 +160,7 @@ namespace SurvDI.UnityIntegration
             
             var toPreInits = Container.GetInterfaceUnitsContainers<IPreInit>();
             foreach (var containerUnit in toPreInits)
-                containerUnit.InvokePreinit();
+                containerUnit.InvokePreInit();
             var toInits = Container.GetInterfaceUnitsContainers<IInit>();
             foreach (var containerUnit in toInits)
                 containerUnit.InvokeInit();

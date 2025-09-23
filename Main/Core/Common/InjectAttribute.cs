@@ -6,13 +6,14 @@ namespace SurvDI.Core.Common
     public abstract class InjectBaseAttribute : Attribute
     {
         public string Id = "";
+        public bool CanBeNull;
     }
     
     [AttributeUsage(AttributeTargets.Field)]
     [MeansImplicitUse(ImplicitUseKindFlags.Assign)]
     public class InjectAttribute : InjectBaseAttribute
     {
-       
+        
     }
 
     /// <summary>

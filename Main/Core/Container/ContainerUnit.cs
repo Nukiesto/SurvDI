@@ -27,8 +27,8 @@ namespace SurvDI.Core.Container
 #else
         internal List<Type> Interfaces { get; } = new();
         private readonly List<Type> _constructorTypes = new();
-        private readonly List<(FieldInfo fieldInfo,string id)> _injectTypes     = new();
-        private readonly List<(FieldInfo fieldInfo,string id)> _injectMassTypes = new();
+        private readonly List<(FieldInfo fieldInfo,InjectAttribute atr)> _injectTypes  = new();
+        private readonly List<(FieldInfo fieldInfo,InjectMultiAttribute atr)> _injectMassTypes = new();
 
         internal readonly List<Type> InjectMassTypes = new();
 #endif
@@ -62,9 +62,7 @@ namespace SurvDI.Core.Container
 
             //Init object
             if (obj == null)
-            {
                 Object = System.Runtime.Serialization.FormatterServices.GetUninitializedObject(Type);
-            }
             else
             {
                 Object = obj;
@@ -80,9 +78,7 @@ namespace SurvDI.Core.Container
             }
 
             if (_constructor == null)
-            {
                 _constructor = Type.GetConstructor(Type.EmptyTypes);
-            }
                 
             if (_constructor != null)
             {
@@ -128,9 +124,9 @@ namespace SurvDI.Core.Container
                     diContainer.ContainersMultyNeed.Add(elementType, new List<ContainerUnit>{this});
             }
 
-            IEnumerable<(FieldInfo fieldInfo,string id)> GetTupleListInjects<T>(IEnumerable<FieldInfo> list) where T : InjectBaseAttribute
+            IEnumerable<(FieldInfo fieldInfo,T id)> GetTupleListInjects<T>(IEnumerable<FieldInfo> list) where T : InjectBaseAttribute
             {
-                return list.Select(s => (s, s.GetCustomAttribute<T>().Id)).Select(s => (s.s, s.Id));
+                return list.Select(s => (s, s.GetCustomAttribute<T>()));
             }
             List<FieldInfo> GetFields<T>() where T : Attribute
             {
@@ -159,20 +155,24 @@ namespace SurvDI.Core.Container
             if (_isInjected)
                 return;
             _isInjected = true;
-            foreach (var (fieldInfo, id) in _injectTypes)
+            foreach (var (fieldInfo, attr) in _injectTypes)
             {
                 var type = fieldInfo.FieldType;
                 
                 if (diContainer.ContainerSingleUnits.TryGetValue(type, out var unit))
                 {
-                    if (id != "" && unit.Id != id)
+                    if (attr.Id != "" && unit.Id != attr.Id)
                         continue;
                     fieldInfo.SetValue(Object, unit.Object);
                 }
                 else
-                    throw new Exception("Cann`t resolve type: " + type.Name + (id != "" ?"[" + id +"]" : "") + ": For: " +  Type.Name);
+                {
+                    if (attr.CanBeNull)
+                        continue;
+                    throw new Exception("Cann`t resolve type: " + type.Name + (attr.Id != "" ?"[" + attr +"]" : "") + ": For: " +  Type.Name);
+                }
             }
-            foreach (var (fieldInfo, id) in _injectMassTypes)
+            foreach (var (fieldInfo, attr) in _injectMassTypes)
             {
                 var fieldType = fieldInfo.FieldType;
                 var elementType = fieldType.GetGenericArguments()[0];
@@ -187,8 +187,8 @@ namespace SurvDI.Core.Container
                 if (multiUnits.TryGetValue(elementType, out var multiUnit))
                     listSource.AddRange(multiUnit);
                 
-                if (id != "")
-                    listSource = listSource.Where(s => s.Id == id).ToList();
+                if (attr.Id != "")
+                    listSource = listSource.Where(s => s.Id == attr.Id).ToList();
                 if (listSource.Count > 0)
                 {
                     var listType = typeof(List<>).MakeGenericType(elementType);
@@ -210,7 +210,7 @@ namespace SurvDI.Core.Container
             }
         }
         
-        internal void AddNewMulty(Type type, ContainerUnit containerUnit)
+        internal void AddNewMulti(Type type, ContainerUnit containerUnit)
         {
             foreach (var (fieldInfo, id) in _injectMassTypes)
             {
@@ -233,13 +233,13 @@ namespace SurvDI.Core.Container
 
                     containerUnit.OnDisposeEvent += () =>
                     {
-                        RemoveMulty(type, containerUnit);
+                        RemoveMulti(type, containerUnit);
                     };
                     break;
                 }
             }
         }
-        internal void RemoveMulty(Type type, ContainerUnit containerUnit)
+        internal void RemoveMulti(Type type, ContainerUnit containerUnit)
         {
             var toRemove = containerUnit.Object;
             if (toRemove == null)
@@ -299,7 +299,7 @@ namespace SurvDI.Core.Container
             OnDisposeEvent?.Invoke();
         }
 
-        internal void InvokePreinit()
+        internal void InvokePreInit()
         {
             if (_canPreInit)
             {
@@ -328,7 +328,7 @@ namespace SurvDI.Core.Container
         }
         internal void InvokeAllInit()
         {
-           InvokePreinit();
+           InvokePreInit();
            InvokeInit();
            InvokePostInit();
         }
