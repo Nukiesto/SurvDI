@@ -1,8 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Reflection;
-using SurvDI.Application.Interfaces;
+using System.Collections.Generic;
 using SurvDI.Core.Container;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace SurvDI.UnityIntegration
 {
@@ -30,25 +29,27 @@ namespace SurvDI.UnityIntegration
 
         public void AddNewInstanceThisContext(ContainerUnit unit)
         {
+            if (_thisContextUnits.Contains(unit))
+                return;
+
             _thisContextUnits.Add(unit);
             unit.OnDisposeEvent += () =>
             {
-                if (_thisContextUnits.Contains(unit))
-                    _thisContextUnits.Remove(unit);
+                _thisContextUnits.Remove(unit);
             };
         }
-        protected abstract void OnInstalling(DiContainer container, int sceneId);
-        protected abstract void OnPreInstalling(DiContainer container, int sceneId);
-        protected abstract void OnPostInstalling(DiContainer container, int sceneId);
-       
-        public void Installing(DiContainer container, int sceneId)
+        protected abstract void OnInstalling(DiContainer container, Scene scene);
+        protected abstract void OnPreInstalling(DiContainer container, Scene scene);
+        protected abstract void OnPostInstalling(DiContainer container, Scene scene);
+
+        public void Installing(DiContainer container, Scene scene)
         {
             if (!_isInstalled)
             {
                 _isInstalled = true;
-                OnPreInstalling(container, sceneId);
-                OnInstalling(container, sceneId);
-                OnPostInstalling(container, sceneId);
+                OnPreInstalling(container, scene);
+                OnInstalling(container, scene);
+                OnPostInstalling(container, scene);
             }
         }
     }

@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 
 namespace SurvDI.Core.Services.EventControllerIntegration
 {
     public class EventModule
     {
         private EventModuleManager _eventModuleManager;
-        
+
         public void Init(EventModuleManager eventModuleManager)
         {
             _eventModuleManager = eventModuleManager;
@@ -30,7 +30,8 @@ namespace SurvDI.Core.Services.EventControllerIntegration
         }
         public void Dispose()
         {
-            _eventModuleManager.DestroyedEventModule(this);    
+            _eventModuleManager?.DestroyedEventModule(this);
+            _eventModuleManager = null;
         }
     }
 }

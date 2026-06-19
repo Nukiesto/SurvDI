@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using SurvDI.Core.Common;
 
@@ -24,17 +24,17 @@ namespace SurvDI.Core.Container
                 BindingType = BindingType.Single
             };
             diContainer.AllUnits.Add(unit);
-            
+
             //Добавляем в сингл словарь
             diContainer.ContainerSingleUnits.Add(type, unit);
-            
+
             //Добавляем в As словарь
             diContainer.AddToAsDic(unit, injectMode);
-        
+
             diContainer.InvokeBindNewInstance(unit);
             return unit;
         }
-        
+
         public static ContainerUnit BindInstanceSingle<T>(this DiContainer diContainer, T instance, InjectMode injectMode = InjectMode.All)
         {
             return BindInstanceSingle(diContainer, typeof(T), instance, injectMode);
@@ -45,22 +45,22 @@ namespace SurvDI.Core.Container
             {
                 BindingType = BindingType.Single
             };
-            
+
             diContainer.AllUnits.Add(unit);
 
             //Добавляем в сингл словарь
             diContainer.ContainerSingleUnits.Add(type, unit);
-            
+
             //Добавляем в As словарь
             diContainer.AddToAsDic(unit, injectMode);
-            
+
             diContainer.InvokeBindNewInstance(unit);
             return unit;
         }
-        
+
         public static ContainerUnit BindMulti<T>(this DiContainer diContainer, InjectMode injectMode = InjectMode.All, bool bindSelf = false)
         {
-            return diContainer.BindMulti(typeof(T), injectMode);
+            return diContainer.BindMulti(typeof(T), injectMode, bindSelf);
         }
         public static ContainerUnit BindMulti(this DiContainer diContainer, Type type, InjectMode injectMode = InjectMode.All, bool bindSelf = false)
         {
@@ -68,23 +68,23 @@ namespace SurvDI.Core.Container
             {
                 BindingType = BindingType.Multy
             };
-            
+
             diContainer.AllUnits.Add(unit);
-            
+
             //Добавляем в multi словарь
             diContainer.AddToMultyDic(unit);
-            
+
             //Добавляем в as словарь
             diContainer.AddToAsDic(unit, injectMode);
-            
+
             diContainer.InvokeBindNewInstance(unit);
-            
+
             if (!diContainer.ContainerSingleUnits.ContainsKey(type))
                 diContainer.ContainerSingleUnits.Add(type, unit);
-            
+
             return unit;
         }
-        
+
         public static ContainerUnit BindInstanceMulti<T>(this DiContainer diContainer, T instance, InjectMode injectMode = InjectMode.All)
         {
             return BindInstanceMulti(diContainer, typeof(T), instance, injectMode);
@@ -93,25 +93,25 @@ namespace SurvDI.Core.Container
         {
             var unit = new ContainerUnit(diContainer, type, injectMode, instance)
             {
-                BindingType = BindingType.Single
+                BindingType = BindingType.Multy
             };
             diContainer.AllUnits.Add(unit);
-            
+
             //Добавляем в multi словарь
             diContainer.AddToMultyDic(unit);
-            
+
             //Добавляем в as словарь
             diContainer.AddToAsDic(unit, injectMode);
-            
+
             diContainer.InvokeBindNewInstance(unit);
             return unit;
         }
-        
+
         private static void AddToAsDic(this DiContainer diContainer, ContainerUnit unit, InjectMode injectMode)
         {
             var interfaces = unit.Interfaces;
             var containerAs = diContainer.ContainerAsTypeUnits;
-         
+
             if (injectMode == InjectMode.InterfacesAndSelf || injectMode == InjectMode.All)
                 foreach (var i in interfaces)
                     AddType(i);
@@ -119,24 +119,30 @@ namespace SurvDI.Core.Container
                 && unit.BaseType != null
                 && unit.BaseType != typeof(object))
                 AddType(unit.BaseType);
-            
+
             void AddType(Type type)
             {
-                if (!containerAs.ContainsKey(type))
+                if (!containerAs.TryGetValue(type, out var units))
                     containerAs.Add(type, new List<ContainerUnit>{unit});
                 else
-                    containerAs[type].Add(unit);
+                {
+                    if (!units.Contains(unit))
+                        units.Add(unit);
+                }
             }
         }
-        
+
         private static void AddToMultyDic(this DiContainer diContainer, ContainerUnit unit)
         {
             diContainer.AddToMultyDic(unit, unit.Type);
         }
         private static void AddToMultyDic(this DiContainer diContainer, ContainerUnit unit, Type type)
         {
-            if (diContainer.ContainerMultiUnits.ContainsKey(type))
-                diContainer.ContainerMultiUnits[type].Add(unit);
+            if (diContainer.ContainerMultiUnits.TryGetValue(type, out var units))
+            {
+                if (!units.Contains(unit))
+                    units.Add(unit);
+            }
             else
                 diContainer.ContainerMultiUnits.Add(type, new List<ContainerUnit>{unit});
         }

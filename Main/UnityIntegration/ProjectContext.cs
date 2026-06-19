@@ -1,6 +1,7 @@
-﻿using System.Linq;
+using System.Collections.Generic;
 using SurvDI.Core.Container;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace SurvDI.UnityIntegration
 {
@@ -8,30 +9,32 @@ namespace SurvDI.UnityIntegration
     public class ProjectContext : MonoContextBase
     {
         [SerializeField] private Installer[] installers;
+        private readonly List<MonoBehaviour> _monoBehaviours = new();
 
         private void OnDestroy()
         {
             OnDestroyInvoke();
         }
 
-        protected override void OnPreInstalling(DiContainer container, int sceneId)
+        protected override void OnPreInstalling(DiContainer container, Scene scene)
         {
             container.OnBindNewInstanceEvent += OnBindNewToInitThisContextUnits;
         }
 
-        protected override void OnInstalling(DiContainer container, int sceneId)
+        protected override void OnInstalling(DiContainer container, Scene scene)
         {
-            if (installers != null)
-            {
-                foreach (var installer in installers)
-                    installer.InstallingInternal(container);
+            if (installers == null)
+                return;
 
-                var list = GetComponents<MonoBehaviour>().Cast<object>().ToList();
-                DiController.InjectInstances(list);
-            }
+            foreach (var installer in installers)
+                installer.InstallingInternal(container);
+
+            _monoBehaviours.Clear();
+            GetComponents(_monoBehaviours);
+            DiController.InjectInstances(_monoBehaviours);
         }
 
-        protected override void OnPostInstalling(DiContainer container, int sceneId)
+        protected override void OnPostInstalling(DiContainer container, Scene scene)
         {
             container.OnBindNewInstanceEvent -= OnBindNewToInitThisContextUnits;
         }
