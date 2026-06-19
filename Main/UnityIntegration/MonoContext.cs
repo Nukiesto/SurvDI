@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using SurvDI.Core.Container;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -11,23 +11,22 @@ namespace SurvDI.UnityIntegration
         [SerializeField] private Installer[] installers;
         [SerializeField] private bool bindInstancesOnSceneInRuntime = true;
 
-        private static List<MonoBehaviour> GetAllMonobehavsOnScene(Scene scene)
+        private static List<object> GetAllMonobehavsOnScene(int sceneId)
         {
-            var monoBehavs = new List<MonoBehaviour>();
-            var rootObjs = new List<GameObject>(scene.rootCount);
-            scene.GetRootGameObjects(rootObjs);
+            var monoBehavs = new List<object>();
+            var rootObjs = SceneManager.GetSceneByBuildIndex(sceneId).GetRootGameObjects();
 
             foreach (var root in rootObjs)
             {
                 if (root.GetComponent<ProjectContext>() != null)
                     continue;
-                root.GetComponentsInChildren(true, monoBehavs);
+                monoBehavs.AddRange(root.GetComponentsInChildren<MonoBehaviour>(true));
             }
-
+            
             return monoBehavs;
         }
-
-        private static void InitInstallersOnScene(DiContainer container, List<MonoBehaviour> monoBehavs)
+        
+        private static void InitInstallersOnScene(DiContainer container, List<object> monoBehavs)
         {
             foreach (var beh in monoBehavs)
                 if (beh is Installer installer)
@@ -39,24 +38,24 @@ namespace SurvDI.UnityIntegration
             OnDestroyInvoke();
         }
 
-        protected override void OnPreInstalling(DiContainer container, Scene scene)
+        protected override void OnPreInstalling(DiContainer container, int sceneId)
         {
             container.OnBindNewInstanceEvent += OnBindNewToInitThisContextUnits;
         }
 
-        protected override void OnInstalling(DiContainer container, Scene scene)
+        protected override void OnInstalling(DiContainer container, int sceneId)
         {
             if (installers != null)
                 foreach (var installer in installers)
                     installer.InstallingInternal(container);
 
-            var list = GetAllMonobehavsOnScene(scene);
+            var list = GetAllMonobehavsOnScene(sceneId);
             InitInstallersOnScene(container, list);
             if (bindInstancesOnSceneInRuntime)
                 DiController.InjectInstances(list);
         }
 
-        protected override void OnPostInstalling(DiContainer container, Scene scene)
+        protected override void OnPostInstalling(DiContainer container, int sceneId)
         {
             container.OnBindNewInstanceEvent -= OnBindNewToInitThisContextUnits;
         }

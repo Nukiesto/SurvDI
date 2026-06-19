@@ -1,3 +1,5 @@
+﻿using System;
+using System.Collections.Generic;
 using SurvDI.Core.Container;
 
 namespace SurvDI.Core.Common
@@ -12,7 +14,22 @@ namespace SurvDI.Core.Common
 
         private static void OnBindForMultyNeed(DiContainer container, ContainerUnit s)
         {
-            container.AddUnitToWaitingMultiInjects(s);
+            var types = new List<Type>();
+            types.AddRange(s.Interfaces);
+            types.Add(s.BaseType);
+            types.Add(s.Type);
+                
+            foreach (var type in types)
+            {
+                if (type == null)
+                    continue;
+                if (!container.ContainersMultyNeed.ContainsKey(type))
+                    continue;
+                    
+                var listNeed = container.ContainersMultyNeed[type];
+                foreach (var containerUnit in listNeed)
+                    containerUnit.AddNewMulti(type, s);
+            }
         }
         private static void OnRemoveDispose(DiContainer container, ContainerUnit s)
         {
