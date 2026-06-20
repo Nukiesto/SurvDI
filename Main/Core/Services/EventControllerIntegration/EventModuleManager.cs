@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,15 +6,11 @@ namespace SurvDI.Core.Services.EventControllerIntegration
 {
     public class EventModuleManager
     {
-        private class EventUnit
-        {
-            
-        }
         private const int MaxCallDepth = 15;
         private int _eventsInCall;
         private readonly Dictionary<Type, Delegate> _events = new(32);
         private readonly Dictionary<EventModule, Dictionary<Type, Delegate>> _eventsModules = new(32);
-        
+
         public void NewEventModule(EventModule eventModule)
         {
             if (!_eventsModules.ContainsKey(eventModule))
@@ -29,18 +25,24 @@ namespace SurvDI.Core.Services.EventControllerIntegration
             {
                 //Debug.Log("Contains");
                 //Debug.Log(dic.Count);
-                
+
                 foreach (var keypair in dic)
                 {
-                    var t = typeof(EventModuleManager);
-                    t.GetMethod(nameof(Unsubscribe))?.MakeGenericMethod(keypair.Key).Invoke(this, new object[]{keypair.Value,false});
+                    if (!_events.TryGetValue(keypair.Key, out var rawList))
+                        continue;
+
+                    var list = Delegate.Remove(rawList, keypair.Value);
+                    if (list == null)
+                        _events.Remove(keypair.Key);
+                    else
+                        _events[keypair.Key] = list;
                     //Debug.Log(_events.ContainsKey(keypair.Key));
                 }
 
                 _eventsModules.Remove(eventModule);
             }
         }
-        
+
 
         /// <summary>
         /// Subscribe callback to be raised on specific event.
@@ -60,7 +62,7 @@ namespace SurvDI.Core.Services.EventControllerIntegration
         public void Subscribe<T> (EventModule eventModule, Action eventAction) where T : struct
         {
             if (eventAction == null) return;
-            
+
             Subscribe<T>(eventModule, s=>{eventAction.Invoke();});
         }
         /// <summary>
@@ -71,7 +73,7 @@ namespace SurvDI.Core.Services.EventControllerIntegration
             if (eventAction == null) return;
             var eventType = typeof (T);
             if (!_events.TryGetValue(eventType, out var rawList)) return;
-            
+
             var list = (rawList as Action<T>) - eventAction;
             if (list == null && !keepEvent) {
                 _events.Remove (eventType);

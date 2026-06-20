@@ -111,7 +111,9 @@ namespace SurvDI.Core.Container
         {
             var interfaces = unit.Interfaces;
             var containerAs = diContainer.ContainerAsTypeUnits;
-         
+
+            if (injectMode == InjectMode.InterfacesAndSelf || injectMode == InjectMode.BaseTypeAndSelf || injectMode == InjectMode.All)
+                AddType(unit.Type);
             if (injectMode == InjectMode.InterfacesAndSelf || injectMode == InjectMode.All)
                 foreach (var i in interfaces)
                     AddType(i);
@@ -122,10 +124,10 @@ namespace SurvDI.Core.Container
             
             void AddType(Type type)
             {
-                if (!containerAs.ContainsKey(type))
+                if (!containerAs.TryGetValue(type, out var units))
                     containerAs.Add(type, new List<ContainerUnit>{unit});
-                else
-                    containerAs[type].Add(unit);
+                else if (!units.Contains(unit))
+                    units.Add(unit);
             }
         }
         

@@ -13,7 +13,7 @@ namespace SurvDI.Core.Container
         //SINGLE UNITS
         //k-type;v-unit
         internal readonly Dictionary<Type, ContainerUnit> ContainerSingleUnits = new();
-        
+
         //MULTUPLE UNITS
         //k-asType;v-units
         internal readonly Dictionary<Type, List<ContainerUnit>> ContainerAsTypeUnits = new();
@@ -21,21 +21,22 @@ namespace SurvDI.Core.Container
         internal readonly Dictionary<Type, List<ContainerUnit>> ContainerMultiUnits = new();
         //k-needMultyType;v-units
         internal readonly Dictionary<Type, List<ContainerUnit>> ContainersMultyNeed = new();
-        
+
         public event Action<DiContainer, ContainerUnit> OnBindNewInstanceEvent;
         public event Action<DiContainer, ContainerUnit> OnRemoveInstanceEvent;
-        
+
         internal readonly List<ContainerUnit> AllUnits = new();
         public List<T> ResolveMulti<T>()
         {
             var list = new List<T>();
             var listSource = new List<ContainerUnit>();
             var elementType = typeof(T);
-            if (ContainerAsTypeUnits.ContainsKey(elementType))
-                listSource.AddRange(ContainerAsTypeUnits[elementType]);
+            var seenUnits = new HashSet<ContainerUnit>();
+            if (ContainerAsTypeUnits.TryGetValue(elementType, out var asUnits))
+                AddUnique(asUnits);
 
-            if (ContainerMultiUnits.ContainsKey(elementType))
-                listSource.AddRange(ContainerMultiUnits[elementType]);
+            if (ContainerMultiUnits.TryGetValue(elementType, out var multiUnits))
+                AddUnique(multiUnits);
 
             if (listSource.Count > 0)
             {
@@ -47,8 +48,15 @@ namespace SurvDI.Core.Container
             }
 
             return list;
+
+            void AddUnique(List<ContainerUnit> units)
+            {
+                foreach (var unit in units)
+                    if (seenUnits.Add(unit))
+                        listSource.Add(unit);
+            }
         }
-     
+
         public bool TryResolveSingle<T>(out T obj)
         {
             if (TryResolveSingle(typeof(T), out var obj2))
@@ -84,7 +92,7 @@ namespace SurvDI.Core.Container
         {
             return ContainerSingleUnits[type].Object;
         }
-        
+
         public bool ContainsSingle<T>()
         {
             return ContainsSingle(typeof(T));
@@ -93,7 +101,7 @@ namespace SurvDI.Core.Container
         {
             return ContainerSingleUnits.ContainsKey(type);
         }
-        
+
         public void InvokeConstructorsAll()
         {
             var copy = AllUnits.ToArray();
@@ -137,20 +145,27 @@ namespace SurvDI.Core.Container
 
         public void RemoveUnit(ContainerUnit containerUnit)
         {
+            if (containerUnit == null)
+                return;
+            if (!AllUnits.Remove(containerUnit))
+                return;
+
             OnRemoveInstanceEvent?.Invoke(this, containerUnit);
             //Debug.Log($"Remove: {containerUnit.Type}");
-            if (ContainerSingleUnits.ContainsKey(containerUnit.Type))
+            if (ContainerSingleUnits.TryGetValue(containerUnit.Type, out var singleUnit) && ReferenceEquals(singleUnit, containerUnit))
                 ContainerSingleUnits.Remove(containerUnit.Type);
-            if (ContainerAsTypeUnits.ContainsKey(containerUnit.Type))
-                ContainerAsTypeUnits.Remove(containerUnit.Type);
-            if (ContainerMultiUnits.ContainsKey(containerUnit.Type))
-                if (ContainerMultiUnits[containerUnit.Type].Contains(containerUnit))
-                    ContainerMultiUnits[containerUnit.Type].Remove(containerUnit);
-            if (ContainersMultyNeed.ContainsKey(containerUnit.Type))
-                if (ContainersMultyNeed[containerUnit.Type].Contains(containerUnit))
-                    ContainersMultyNeed[containerUnit.Type].Remove(containerUnit);
-            
+
+            RemoveFromDictionary(ContainerAsTypeUnits, containerUnit);
+            RemoveFromDictionary(ContainerMultiUnits, containerUnit);
+            RemoveFromDictionary(ContainersMultyNeed, containerUnit);
+
             //Debug.Log(ContainerSingleUnits.ContainsKey(containerUnit.Type));
+        }
+
+        private static void RemoveFromDictionary(Dictionary<Type, List<ContainerUnit>> dictionary, ContainerUnit containerUnit)
+        {
+            foreach (var units in dictionary.Values)
+                units.Remove(containerUnit);
         }
     }
 }

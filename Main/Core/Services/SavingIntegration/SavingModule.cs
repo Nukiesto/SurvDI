@@ -1,6 +1,5 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using SurvDI.UnityIntegration.Debugging;
 using UsefulScripts.NetScripts.Data;
@@ -44,25 +43,26 @@ namespace SurvDI.Core.Services.SavingIntegration
             OnSaveEvent?.Invoke();
         }
     }
-    
+
     public class SavingModule
     {
+        private static readonly Dictionary<Type, FieldInfo[]> SaveableFieldsByType = new();
+
         public static void LoadAll(Type classType, object obj)
         {
             if (classType != null)
             {
-                var fields = classType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public).ToList();
-                var fieldsSaveable = fields.Where(s => s.GetCustomAttribute<SaveableAttribute>() != null).ToList();
-                if (fieldsSaveable.Count == 0)
+                var fieldsSaveable = GetSaveableFields(classType);
+                if (fieldsSaveable.Length == 0)
                     return;
                 var saveData = DataSaver.Load<SavingData>(GetName(classType)) ?? new SavingData();
-                
+
                 foreach (var fieldInfo in fieldsSaveable)
                 {
                     if (saveData.Units.TryGetValue(fieldInfo.Name, out var data))
                     {
                         var valueGet = DataSaver.Deserialize(data.data, fieldInfo.FieldType);
-                        
+
                         fieldInfo.SetValue(obj, valueGet);
                     }
                     else
@@ -73,7 +73,7 @@ namespace SurvDI.Core.Services.SavingIntegration
                             saveData.Units.Add(fieldInfo.Name, new SavingData.Unit(valueGet));
                             fieldInfo.SetValue(obj, valueGet);
                         }
-                        catch (Exception e)
+                        catch (Exception)
                         {
                             fieldInfo.SetValue(obj, default);
                         }
@@ -93,13 +93,12 @@ namespace SurvDI.Core.Services.SavingIntegration
         {
             if (classType != null)
             {
-                var fields = classType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public).ToList();
-                var fieldsSaveable = fields.Where(s => s.GetCustomAttribute<SaveableAttribute>() != null).ToList();
-                if (fieldsSaveable.Count == 0)
+                var fieldsSaveable = GetSaveableFields(classType);
+                if (fieldsSaveable.Length == 0)
                     return;
                 Debugger.Log("Save");
                 var saveData = DataSaver.Load<SavingData>(GetName(classType)) ?? new SavingData();
-                
+
                 foreach (var fieldInfo in fieldsSaveable)
                 {
                     if (saveData.Units.TryGetValue(fieldInfo.Name, out var data))
@@ -117,6 +116,24 @@ namespace SurvDI.Core.Services.SavingIntegration
                 }
                 DataSaver.Save(GetName(classType), saveData);
             }
+        }
+
+        private static FieldInfo[] GetSaveableFields(Type classType)
+        {
+            if (SaveableFieldsByType.TryGetValue(classType, out var cachedFields))
+                return cachedFields;
+
+            var fields = classType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            var fieldsSaveable = new List<FieldInfo>();
+            foreach (var fieldInfo in fields)
+            {
+                if (fieldInfo.GetCustomAttribute<SaveableAttribute>() != null)
+                    fieldsSaveable.Add(fieldInfo);
+            }
+
+            cachedFields = fieldsSaveable.ToArray();
+            SaveableFieldsByType.Add(classType, cachedFields);
+            return cachedFields;
         }
 
         private static string GetName(Type type)

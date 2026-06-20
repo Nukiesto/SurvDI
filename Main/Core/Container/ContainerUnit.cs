@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -14,9 +15,9 @@ namespace SurvDI.Core.Container
     {
         public BindingType BindingType { get; internal set; }
         public readonly object Object;
-        
+
         private readonly ConstructorInfo _constructor;
-        
+
 #if UNITY_2019_4
         public List<Type> Interfaces { get; } = new List<Type>();
         private readonly List<Type> _constructorTypes = new List<Type>();
@@ -33,31 +34,31 @@ namespace SurvDI.Core.Container
         internal readonly List<Type> InjectMassTypes = new();
 #endif
         private readonly FieldInfo _eventModuleField;
-        
+
         internal string Id { get; private set; }
-        
+
         public Type BaseType { get; }
         public Type Type { get; }
 
         public bool CanInvokeConstructor { get; set; } = true;
-        
+
         private bool _canPreInit = true;
         private bool _canInit = true;
         private bool _canPostInit = true;
         private bool _canLoadSave = true;
-        
+
         public event Action OnDisposeEvent;
 
         private bool _isInjected;
 
         private DiContainer _diContainer;
-        
-        
+
+
         internal ContainerUnit(DiContainer diContainer, Type type, InjectMode injectMode = InjectMode.All, object obj = null)
         {
             _diContainer = diContainer;
             OnDisposeEvent += () => { diContainer.RemoveUnit(this); };
-            
+
             Type = type;
 
             //Init object
@@ -68,7 +69,7 @@ namespace SurvDI.Core.Container
                 Object = obj;
                 CanInvokeConstructor = false;
             }
-            
+
             //СonstructorTypes
             var constructors = Type.GetConstructors();
             foreach (var constructorInfo in constructors)
@@ -79,7 +80,7 @@ namespace SurvDI.Core.Container
 
             if (_constructor == null)
                 _constructor = Type.GetConstructor(Type.EmptyTypes);
-                
+
             if (_constructor != null)
             {
                 var args = _constructor.GetParameters();
@@ -90,30 +91,30 @@ namespace SurvDI.Core.Container
             if (_constructor == null)
                 if (CanInvokeConstructor)
                     CanInvokeConstructor = false;
-          
-            
+
+
             //Interfaces
             Interfaces.AddRange(Type.GetInterfaces());
-            
+
             //Init base type
             if (Type.BaseType != typeof(object) && (injectMode == InjectMode.BaseTypeAndSelf || injectMode == InjectMode.All))
                 BaseType = Type.BaseType;
-                
+
             //InjectTypes
             var allFields = Type.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public).ToList();
-            
+
             if (BaseType != null)
                 allFields.AddRange(BaseType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public));
 
             var multyInjectFields = GetFields<InjectMultiAttribute>();
             var singleInjectFields = GetFields<InjectAttribute>();
-            
+
             _injectTypes.AddRange(GetTupleListInjects<InjectAttribute>(singleInjectFields));
             _injectMassTypes.AddRange(GetTupleListInjects<InjectMultiAttribute>(multyInjectFields));
-            
+
             //EventModule
             _eventModuleField = allFields.FirstOrDefault(s => s.FieldType == typeof(EventModule));
-            
+
             //InjectMassTypes
             InjectMassTypes.AddRange(multyInjectFields.Select(s => s.FieldType.GetGenericArguments()[0]));
             foreach (var elementType in InjectMassTypes)
@@ -136,7 +137,7 @@ namespace SurvDI.Core.Container
 
         internal void InvokeConstructorInit(DiContainer diContainer)
         {
-            if (!CanInvokeConstructor) 
+            if (!CanInvokeConstructor)
                 return;
             var injectNeed = new List<object>();
             foreach (var type in _constructorTypes)
@@ -158,7 +159,7 @@ namespace SurvDI.Core.Container
             foreach (var (fieldInfo, attr) in _injectTypes)
             {
                 var type = fieldInfo.FieldType;
-                
+
                 if (diContainer.ContainerSingleUnits.TryGetValue(type, out var unit))
                 {
                     if (attr.Id != "" && unit.Id != attr.Id)
@@ -176,40 +177,40 @@ namespace SurvDI.Core.Container
             {
                 var fieldType = fieldInfo.FieldType;
                 var elementType = fieldType.GetGenericArguments()[0];
-                
+
                 var listSource = new List<ContainerUnit>();
-                
+                var seenUnits = new HashSet<ContainerUnit>();
+
                 var asUnits = diContainer.ContainerAsTypeUnits;
                 if (asUnits.TryGetValue(elementType, out var unit))
-                    listSource.AddRange(unit);
-                
+                    AddUnique(unit);
+
                 var multiUnits = diContainer.ContainerMultiUnits;
                 if (multiUnits.TryGetValue(elementType, out var multiUnit))
-                    listSource.AddRange(multiUnit);
-                
+                    AddUnique(multiUnit);
+
                 if (attr.Id != "")
                     listSource = listSource.Where(s => s.Id == attr.Id).ToList();
                 if (listSource.Count > 0)
                 {
-                    var listType = typeof(List<>).MakeGenericType(elementType);
-                    var list = Activator.CreateInstance(listType);
+                    var list = CreateList(elementType);
                     //Debug.Log(nameof(GetObject));
 
-                    var getObjectMethod = typeof(ContainerUnit).GetMethod(nameof(GetObject))?.MakeGenericMethod(elementType);
-                    var methodAdd = listType.GetMethod("Add");
+                    foreach (var containerUnit in listSource)
+                        list.Add(containerUnit.Object);
 
-                    if (getObjectMethod != null && methodAdd != null)
-                        foreach (var containerUnit in listSource)
-                            methodAdd.Invoke(list, new[]
-                            {
-                                getObjectMethod.Invoke(containerUnit, new object[] { })
-                            });
-                   
                     fieldInfo.SetValue(Object,list);
+                }
+
+                void AddUnique(List<ContainerUnit> units)
+                {
+                    foreach (var containerUnit in units)
+                        if (seenUnits.Add(containerUnit))
+                            listSource.Add(containerUnit);
                 }
             }
         }
-        
+
         internal void AddNewMulti(Type type, ContainerUnit containerUnit)
         {
             foreach (var (fieldInfo, id) in _injectMassTypes)
@@ -218,18 +219,13 @@ namespace SurvDI.Core.Container
                 var elementType = fieldType.GetGenericArguments()[0];
                 if (type == elementType)
                 {
-                    var listType = typeof(List<>).MakeGenericType(elementType);
-                    
-                    var list = fieldInfo.GetValue(Object);
+                    var list = fieldInfo.GetValue(Object) as IList;
                     if (list == null)
                     {
-                        list = Activator.CreateInstance(listType);
+                        list = CreateList(elementType);
                         fieldInfo.SetValue(Object, list);
                     }
-                    var methodAdd = listType.GetMethod("Add");
-                    var getObjectMethod = typeof(ContainerUnit).GetMethod("GetObject")?.MakeGenericMethod(elementType);
-                    var objGet = getObjectMethod?.Invoke(containerUnit, new object[] { });
-                    methodAdd?.Invoke(list, new[] {objGet});
+                    list.Add(containerUnit.Object);
 
                     containerUnit.OnDisposeEvent += () =>
                     {
@@ -250,25 +246,17 @@ namespace SurvDI.Core.Container
                 var elementType = fieldType.GetGenericArguments()[0];
                 if (type == elementType)
                 {
-                    var listType = typeof(List<>).MakeGenericType(elementType);
-                    var list = fieldInfo.GetValue(Object);
+                    var list = fieldInfo.GetValue(Object) as IList;
                     if (list == null)
-                    {
-                        list = Activator.CreateInstance(listType);
-                        fieldInfo.SetValue(Object, list);
                         continue;
-                    }
-                    
-                    var methodRemove = listType.GetMethod("Remove");
-                    var methodContains = listType.GetMethod("Contains");
-                    var contains = (bool)(methodContains?.Invoke(list, new[] {toRemove})??false);
-                    if (contains)
-                        methodRemove?.Invoke(list, new[] {toRemove});
+
+                    if (list.Contains(toRemove))
+                        list.Remove(toRemove);
                     break;
                 }
             }
         }
-        
+
         public void InitModules()
         {
             if (_canLoadSave && BindingType == BindingType.Single)
@@ -281,13 +269,13 @@ namespace SurvDI.Core.Container
             {
                 if (_eventModuleField.GetValue(Object) == null)
                     _eventModuleField.SetValue(Object, new EventModule());
-                
+
                 if (_eventModuleField.GetValue(Object) is EventModule eventModule)
                     if (_diContainer.TryResolveSingle<EventModuleManager>(out var eventModuleManager))
                         eventModule.Init(eventModuleManager);
             }
         }
-        
+
         public void Dispose()
         {
             if (_eventModuleField != null)
@@ -351,5 +339,10 @@ namespace SurvDI.Core.Container
         }
 
         #endregion
+
+        private static IList CreateList(Type elementType)
+        {
+            return (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType));
+        }
     }
 }
